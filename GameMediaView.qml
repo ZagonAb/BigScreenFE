@@ -292,6 +292,23 @@ FocusScope {
         onClicked: root._next()
     }
 
+    VideoVolumeControl {
+        id: _volumeControl
+        mediaPlayer: _mediaPlayer
+        screenWidth: root.width
+
+        anchors {
+            right:       _mediaArea.right
+            rightMargin: vpx(14)
+            top:         _mediaArea.verticalCenter
+            topMargin:   vpx(-15)
+        }
+
+        visible: root._current !== null && root._current.isVideo
+        opacity: visible ? 1.0 : 0.0
+        Behavior on opacity { NumberAnimation { duration: 180 } }
+    }
+
     Item {
         id: _filmStrip
         anchors {
@@ -394,6 +411,19 @@ FocusScope {
             event.accepted = true
             root._next()
             return
+        }
+
+        if (root._current && root._current.isVideo) {
+            if (event.key === Qt.Key_Up) {
+                event.accepted = true
+                _volumeControl.volumeUp()
+                return
+            }
+            if (event.key === Qt.Key_Down) {
+                event.accepted = true
+                _volumeControl.volumeDown()
+                return
+            }
         }
     }
 }
