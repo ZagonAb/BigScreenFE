@@ -298,10 +298,10 @@ FocusScope {
         screenWidth: root.width
 
         anchors {
-            right:       _mediaArea.right
+            right: _mediaArea.right
             rightMargin: vpx(14)
-            top:         _mediaArea.verticalCenter
-            topMargin:   vpx(-15)
+            top: _mediaArea.verticalCenter
+            topMargin: vpx(-15)
         }
 
         visible: root._current !== null && root._current.isVideo

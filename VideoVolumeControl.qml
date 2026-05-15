@@ -12,7 +12,7 @@ import QtGraphicalEffects 1.15
 Item {
     id: volumeControl
 
-    property var  mediaPlayer: null
+    property var mediaPlayer: null
     property real screenWidth: 1280
 
     function px(v) { return v * (screenWidth / 1280) }
@@ -21,12 +21,12 @@ Item {
     height: _barVisible ? px(44 + 10 + 160) : px(44)
     Behavior on height { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
 
-    property real _volume:     1.0
-    property bool _muted:      false
+    property real _volume: 1.0
+    property bool _muted: false
     property bool _barVisible: false
 
     Component.onCompleted: {
-        var savedVol  = api.memory.get("videoVolume")
+        var savedVol = api.memory.get("videoVolume")
         var savedMute = api.memory.get("videoMuted")
         if (savedVol !== undefined && savedVol !== null) {
             var v = parseFloat(savedVol)
@@ -45,7 +45,7 @@ Item {
 
     function _saveState() {
         api.memory.set("videoVolume", _volume)
-        api.memory.set("videoMuted",  _muted)
+        api.memory.set("videoMuted", _muted)
     }
 
     function volumeUp() {
@@ -84,7 +84,7 @@ Item {
         acceptedButtons: Qt.NoButton
         propagateComposedEvents: true
         onEntered: { _barVisible = true; _hideTimer.stop()  }
-        onExited:  { _hideTimer.restart()                   }
+        onExited: { _hideTimer.restart()                   }
     }
 
     Item {
@@ -95,7 +95,7 @@ Item {
         Rectangle {
             anchors.fill: parent
             radius: width / 2
-            color:  _btnMA.containsMouse ? "#66ffffff" : "#44000000"
+            color: _btnMA.containsMouse ? "#66ffffff" : "#44000000"
             border.width: px(1); border.color: "#66ffffff"
             Behavior on color { ColorAnimation { duration: 120 } }
         }
@@ -132,8 +132,8 @@ Item {
     Item {
         id: _bar
         anchors {
-            top:              _btn.bottom
-            topMargin:        px(10)
+            top: _btn.bottom
+            topMargin: px(10)
             horizontalCenter: parent.horizontalCenter
         }
         width: px(36); height: px(160)
@@ -180,7 +180,7 @@ Item {
                 _saveState()
             }
 
-            onPressed:         applyMouse(mouseY)
+            onPressed: applyMouse(mouseY)
             onPositionChanged: { if (pressed) applyMouse(mouseY) }
         }
     }
