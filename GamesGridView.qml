@@ -267,10 +267,10 @@ FocusScope {
                 }
                 visible: root.showingCollectionList
                 text: cell.coverLabel
-                color: _textPrimary
-                font.family: global.fonts.sans; font.pixelSize: vpx(11)
+                color: "white"
+                font.family: global.fonts.sans; font.pixelSize: vpx(12)
                 wrapMode: Text.WordWrap; horizontalAlignment: Text.AlignHCenter
-                style: Text.Outline; styleColor: lightTheme ? "#ffffff" : "#05070a"
+                style: Text.Outline; styleColor: "#05070a"
                 z: 2
                 Behavior on color { ColorAnimation { duration: 200 } }
             }
