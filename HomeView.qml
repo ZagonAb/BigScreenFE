@@ -1,4 +1,4 @@
-// WTF-Library Theme
+// BigScreenFE Theme
 // Copyright (C) 2026 Gonzalo
 //
 // Licensed under Creative Commons
@@ -19,8 +19,9 @@ FocusScope {
     signal openHub(var game)
     signal openRA(var game, string raGameId)
 
-    readonly property var currentGame: _strip.currentIndex < _recentCount
-    ? _getGame(_strip.currentIndex) : null
+    property bool lightTheme: false
+
+    readonly property var currentGame: _strip.currentIndex < _recentCount ? _getGame(_strip.currentIndex) : null
     readonly property bool onViewMore: _strip.currentIndex >= _recentCount
     readonly property bool onViewMoreFocused: _strip.activeFocus && (_strip.currentIndex >= _recentCount)
     readonly property bool raStripFocused: _raStrip.activeFocus
@@ -82,12 +83,11 @@ FocusScope {
             if (!proxy) continue;
             for (var j = 0; j < api.allGames.count; j++) {
                 var g = api.allGames.get(j);
-                if (g && g.title === proxy.title
-                    && String(g.lastPlayed) === String(proxy.lastPlayed)) {
+                if (g && g.title === proxy.title && String(g.lastPlayed) === String(proxy.lastPlayed)) {
                     arr.push(g);
-                usedTitles[g.title] = true;
-                break;
-                    }
+                    usedTitles[g.title] = true;
+                    break;
+                }
             }
         }
 
@@ -109,16 +109,16 @@ FocusScope {
 
     property var _recGames: []
     property var _recReasons: []
-    readonly property string _raApiKey: api.memory.has("ra_api_key")  ? api.memory.get("ra_api_key")  : ""
+    readonly property string _raApiKey: api.memory.has("ra_api_key") ? api.memory.get("ra_api_key") : ""
     readonly property string _raUser: api.memory.has("ra_api_user") ? api.memory.get("ra_api_user") : ""
-    property var  _raRecentGames: []
-    property bool _raLoading:     false
+    property var _raRecentGames: []
+    property bool _raLoading: false
 
     function _loadRARecent() {
         _raLoading = true;
         var xhr = new XMLHttpRequest();
         var url = "https://retroachievements.org/API/API_GetUserRecentlyPlayedGames.php"
-                  + "?y=" + _raApiKey + "&u=" + _raUser + "&c=4";
+        + "?y=" + _raApiKey + "&u=" + _raUser + "&c=4";
         xhr.open("GET", url, true);
         xhr.onreadystatechange = function() {
             if (xhr.readyState !== XMLHttpRequest.DONE) return;
@@ -131,19 +131,15 @@ FocusScope {
                 for (var i = 0; i < arr.length && i < 4; i++) {
                     var g = arr[i];
                     result.push({
-                        title:       g.Title          || "",
-                        consoleName: g.ConsoleName    || "",
-                        imgIcon:     g.ImageIcon
-                                     ? "https://media.retroachievements.org" + g.ImageIcon
-                                     : "",
-                        imgTitle:    g.ImageTitle
-                                     ? "https://media.retroachievements.org" + g.ImageTitle
-                                     : "",
-                        raGameId:    String(g.GameID              || ""),
-                        numAch:      parseInt(g.NumAchievements)        || 0,
-                        numEarned:   parseInt(g.NumAchievementsEarned)  || 0,
-                        pctWon:      parseFloat(g.PctWon)               || 0.0,
-                        lastPlayed:  g.LastPlayed || ""
+                        title: g.Title || "",
+                        consoleName: g.ConsoleName || "",
+                        imgIcon: g.ImageIcon ? "https://media.retroachievements.org" + g.ImageIcon : "",
+                        imgTitle: g.ImageTitle ? "https://media.retroachievements.org" + g.ImageTitle : "",
+                        raGameId: String(g.GameID || ""),
+                                numAch: parseInt(g.NumAchievements) || 0,
+                                numEarned: parseInt(g.NumAchievementsEarned) || 0,
+                                pctWon: parseFloat(g.PctWon) || 0.0,
+                                lastPlayed: g.LastPlayed || ""
                     });
                 }
                 _raRecentGames = result;
@@ -289,9 +285,7 @@ FocusScope {
 
         var favUsed = 0;
         for (var ri = 0; ri < rest.length && result.length < 4; ri++) {
-            var isUnplayedFav = !rest[ri].game.playCount
-            && !rest[ri].game.playTime
-            && rest[ri].game.favorite;
+            var isUnplayedFav = !rest[ri].game.playCount && !rest[ri].game.playTime && rest[ri].game.favorite;
             if (isUnplayedFav) {
                 if (favUsed >= 1) continue;
                 favUsed++;
@@ -343,12 +337,13 @@ FocusScope {
         Behavior on opacity { NumberAnimation { duration: 400 } }
     }
 
-    Rectangle { anchors.fill: parent; color: "#0b1117"; z: -1 }
+    Rectangle { anchors.fill: parent; color: root.lightTheme ? "#dfe3e8" : "#0b1117"; z: -1; Behavior on color { ColorAnimation { duration: 400 } } }
 
     Rectangle {
         anchors.fill: parent
-        color: "#0b1117"
-        opacity: root._bgSrc !== "" ? 0.55 : 1.0
+        color: root.lightTheme ? "#dfe3e8" : "#0b1117"
+        opacity: root._bgSrc !== "" ? (root.lightTheme ? 0.72 : 0.55) : 1.0
+        Behavior on color { ColorAnimation { duration: 400 } }
         Behavior on opacity { NumberAnimation { duration: 500 } }
     }
 
@@ -357,8 +352,8 @@ FocusScope {
         height: parent.height
         gradient: Gradient {
             GradientStop { position: 0.0; color: "transparent" }
-            GradientStop { position: 0.7; color: "#0b1117" }
-            GradientStop { position: 1.0; color: "#0b1117" }
+            GradientStop { position: 0.7; color: root.lightTheme ? "#dfe3e8" : "#0b1117" }
+            GradientStop { position: 1.0; color: root.lightTheme ? "#dfe3e8" : "#0b1117" }
         }
     }
 
@@ -432,8 +427,9 @@ FocusScope {
                 font.pixelSize: vpx(32)
                 font.bold: true
                 font.family: global.fonts.sans
-                color: "#ffffff"
+                color: root.lightTheme ? "#0d1117" : "#ffffff"
                 visible: _strip.currentIndex < Math.min(_recentSrc.count, 3)
+                Behavior on color { ColorAnimation { duration: 400 } }
                 Behavior on opacity { NumberAnimation { duration: 200 } }
                 opacity: visible ? 0.9 : 0.0
             }
@@ -494,14 +490,17 @@ FocusScope {
                         }
                         Rectangle {
                             anchors.fill: parent
-                            color: "#1c2533"
+                            color: root.lightTheme ? "#c8cdd5" : "#1c2533"
                             visible: parent.status !== Image.Ready || _cell._isViewMore
+                            Behavior on color { ColorAnimation { duration: 400 } }
                         }
                     }
 
                     Rectangle {
                         anchors.fill: parent
-                        color: _cell.isCurrent && _strip.activeFocus ? "#16202b" : "#26282a"
+                        color: _cell.isCurrent && _strip.activeFocus
+                        ? (root.lightTheme ? "#c5cad2" : "#16202b")
+                        : (root.lightTheme ? "#d5dae2" : "#26282a")
                         visible: _cell._isViewMore
                         Behavior on color { ColorAnimation { duration: 200 } }
                         Column {
@@ -514,8 +513,9 @@ FocusScope {
                                 font.pixelSize: vpx(22)
                                 font.bold: true
                                 font.family: global.fonts.sans
-                                color: "white"
+                                color: root.lightTheme ? "#0d1117" : "white"
                                 lineHeight: 1.35
+                                Behavior on color { ColorAnimation { duration: 400 } }
                             }
                         }
                     }
@@ -580,7 +580,8 @@ FocusScope {
                         property real borderExtra: 0
                         anchors.margins: vpx(-3.5) - borderExtra
                         border.width: vpx(1.5) + borderExtra
-                        border.color: _cell._isViewMore ? "#7eb4d4" : "#c7c7c7"
+                        border.color: root.lightTheme ? "#05070a" : "#c7c7c7"
+
                         color: "transparent"
                         opacity: 0
 
@@ -657,9 +658,10 @@ FocusScope {
                     font.pixelSize: vpx(20)
                     font.bold: true
                     font.family: global.fonts.sans
-                    color: "#ffffff"
+                    color: root.lightTheme ? "#0d1117" : "#ffffff"
                     elide: Text.ElideRight
                     width: parent.width
+                    Behavior on color { ColorAnimation { duration: 400 } }
                 }
 
                 Row {
@@ -669,7 +671,9 @@ FocusScope {
 
                     Text {
                         text: "▶"; font.pixelSize: vpx(10); font.family: global.fonts.sans
-                        color: "#57cbde"; anchors.verticalCenter: parent.verticalCenter
+                        color: root.lightTheme ? "#1a6b7a" : "#57cbde"
+                        anchors.verticalCenter: parent.verticalCenter
+                        Behavior on color { ColorAnimation { duration: 400 } }
                     }
                     Text {
                         text: {
@@ -681,7 +685,9 @@ FocusScope {
                             return "";
                         }
                         font.pixelSize: vpx(12); font.bold: true
-                        font.family: global.fonts.sans; color: "#57cbde"
+                        font.family: global.fonts.sans
+                        color: root.lightTheme ? "#1a6b7a" : "#57cbde"
+                        Behavior on color { ColorAnimation { duration: 400 } }
                     }
                 }
             }
@@ -693,9 +699,10 @@ FocusScope {
                 font.pixelSize: vpx(32)
                 font.bold: true
                 font.family: global.fonts.sans
-                color: "#ffffff"
+                color: root.lightTheme ? "#0d1117" : "#ffffff"
                 opacity: 0.95
                 visible: root._recGames.length > 0
+                Behavior on color { ColorAnimation { duration: 400 } }
             }
 
             ListView {
@@ -756,8 +763,9 @@ FocusScope {
                                 || g.assets.banner || g.assets.titlescreen || "";
                             }
                             Rectangle {
-                                anchors.fill: parent; color: "#1c2533"
+                                anchors.fill: parent; color: root.lightTheme ? "#c8cdd5" : "#1c2533"
                                 visible: parent.status !== Image.Ready
+                                Behavior on color { ColorAnimation { duration: 400 } }
                             }
                         }
 
@@ -838,7 +846,8 @@ FocusScope {
                             right: parent.right
                             bottom: parent.bottom
                         }
-                        color: Qt.rgba(0.07, 0.10, 0.15, 0.96)
+                        color: root.lightTheme ? Qt.rgba(0.93, 0.95, 0.97, 0.97) : Qt.rgba(0.07, 0.10, 0.15, 0.96)
+                        Behavior on color { ColorAnimation { duration: 400 } }
 
                         Column {
                             anchors {
@@ -856,9 +865,10 @@ FocusScope {
                                 font.pixelSize: vpx(16)
                                 font.bold: true
                                 font.family: global.fonts.sans
-                                color: "#ffffff"
+                                color: root.lightTheme ? "#0d1117" : "#ffffff"
                                 elide: Text.ElideRight
                                 visible: _rcLogo.visible
+                                Behavior on color { ColorAnimation { duration: 400 } }
                             }
 
                             Rectangle {
@@ -868,11 +878,18 @@ FocusScope {
                                 radius: vpx(3)
                                 color: {
                                     var r = _rc._reason;
+                                    if (root.lightTheme) {
+                                        if (r === "In your favorites") return "#c8ecd4";
+                                        if (r === "Based on your taste") return "#c8dce8";
+                                        if (r === "Highly rated") return "#e8e0c0";
+                                        return "#d4d8de";
+                                    }
                                     if (r === "In your favorites") return "#1a3320";
                                     if (r === "Based on your taste") return "#1a2a3a";
                                     if (r === "Highly rated") return "#2a2010";
                                     return "#1a1f28";
                                 }
+                                Behavior on color { ColorAnimation { duration: 400 } }
                                 Text {
                                     id: _reasonText
                                     anchors.centerIn: parent
@@ -883,39 +900,41 @@ FocusScope {
                                     color: {
                                         var r = _rc._reason;
                                         if (r === "In your favorites") return "#00e676";
-                                        if (r === "Based on your taste") return "#57cbde";
+                                        if (r === "Based on your taste") return root.lightTheme ? "#1a6b7a" : "#57cbde";
                                         if (r === "Highly rated") return "#f5c518";
-                                        return "#7a8a94";
+                                        return root.lightTheme ? "#5a6472" : "#7a8a94";
                                     }
+                                    Behavior on color { ColorAnimation { duration: 400 } }
                                 }
                             }
 
                             Text {
                                 width: parent.width
-                                text: _rc._game && _rc._game.developer !== ""
-                                ? _rc._game.developer : ""
+                                text: _rc._game && _rc._game.developer !== "" ? _rc._game.developer : ""
                                 font.pixelSize: vpx(12)
                                 font.family: global.fonts.sans
-                                color: "#8ab4c8"
+                                color: root.lightTheme ? "#2a6080" : "#8ab4c8"
                                 elide: Text.ElideRight
                                 visible: text !== ""
+                                Behavior on color { ColorAnimation { duration: 400 } }
                             }
 
                             Text {
                                 width: parent.width
-                                text: _rc._game && _rc._game.genre !== ""
-                                ? _rc._game.genre : ""
+                                text: _rc._game && _rc._game.genre !== "" ? _rc._game.genre : ""
                                 font.pixelSize: vpx(12)
                                 font.family: global.fonts.sans
-                                color: "#7a8a94"
+                                color: root.lightTheme ? "#5a6472" : "#7a8a94"
                                 elide: Text.ElideRight
                                 visible: text !== ""
+                                Behavior on color { ColorAnimation { duration: 400 } }
                             }
 
                             Rectangle {
                                 width: parent.width
                                 height: vpx(1)
-                                color: "#22ffffff"
+                                color: root.lightTheme ? "#22000000" : "#22ffffff"
+                                Behavior on color { ColorAnimation { duration: 400 } }
                             }
 
                             Row {
@@ -929,17 +948,31 @@ FocusScope {
 
                                     Repeater {
                                         model: 5
-                                        Image {
-                                            property real threshold: (index + 1) / 5
-                                            property real r: _rc._game ? _rc._game.rating : 0
-                                            property real half: threshold - 0.1
-                                            source: r >= threshold ? "assets/icons/star1.png"
-                                            : r >= half ? "assets/icons/star2.png"
-                                            : "assets/icons/star0.png"
-                                            width: vpx(16); height: vpx(16)
-                                            fillMode: Image.PreserveAspectFit
-                                            mipmap: true; smooth: true
+                                        Item {
+                                            width: vpx(16)
+                                            height: vpx(16)
                                             anchors.verticalCenter: parent.verticalCenter
+
+                                            Image {
+                                                id: _starIcon
+                                                anchors.fill: parent
+                                                property real threshold: (index + 1) / 5
+                                                property real r: _rc._game ? _rc._game.rating : 0
+                                                property real half: threshold - 0.1
+                                                source: r >= threshold ? "assets/icons/star1.png"
+                                                : r >= half ? "assets/icons/star2.png"
+                                                : "assets/icons/star0.png"
+                                                fillMode: Image.PreserveAspectFit
+                                                mipmap: true; smooth: true
+                                                visible: false
+                                            }
+
+                                            ColorOverlay {
+                                                anchors.fill: _starIcon
+                                                source: _starIcon
+                                                color: root.lightTheme ? "#05070a" : "#ffffff"
+                                                Behavior on color { ColorAnimation { duration: 400; easing.type: Easing.InOutQuad } }
+                                            }
                                         }
                                     }
                                 }
@@ -954,14 +987,16 @@ FocusScope {
                                     Text {
                                         text: "▶"
                                         font.pixelSize: vpx(12)
-                                        color: "#57cbde"
+                                        color: root.lightTheme ? "#1a6b7a" : "#57cbde"
                                         anchors.verticalCenter: parent.verticalCenter
+                                        Behavior on color { ColorAnimation { duration: 400 } }
                                     }
                                     Text {
                                         text: _rc._game ? _rc._game.playCount + "×" : ""
                                         font.pixelSize: vpx(14)
                                         font.family: global.fonts.sans
-                                        color: "#57cbde"
+                                        color: root.lightTheme ? "#1a6b7a" : "#57cbde"
+                                        Behavior on color { ColorAnimation { duration: 400 } }
                                     }
                                 }
 
@@ -969,9 +1004,10 @@ FocusScope {
                                     width: _neverText.width + vpx(8)
                                     height: vpx(18)
                                     radius: vpx(3)
-                                    color: "#1a3a4a"
+                                    color: root.lightTheme ? "#c0dce8" : "#1a3a4a"
                                     anchors.verticalCenter: parent.verticalCenter
                                     visible: _rc._game ? (_rc._game.playCount === 0) : false
+                                    Behavior on color { ColorAnimation { duration: 400 } }
 
                                     Text {
                                         id: _neverText
@@ -980,20 +1016,21 @@ FocusScope {
                                         font.pixelSize: vpx(12)
                                         font.bold: true
                                         font.family: global.fonts.sans
-                                        color: "#57cbde"
+                                        color: root.lightTheme ? "#1a6b7a" : "#57cbde"
+                                        Behavior on color { ColorAnimation { duration: 400 } }
                                     }
                                 }
                             }
 
                             Text {
                                 width: parent.width
-                                text: (_rc._game && _rc._game.collections.count > 0)
-                                ? _rc._game.collections.get(0).name : ""
+                                text: (_rc._game && _rc._game.collections.count > 0) ? _rc._game.collections.get(0).name : ""
                                 font.pixelSize: vpx(12)
                                 font.family: global.fonts.sans
-                                color: "#556677"
+                                color: root.lightTheme ? "#8090a0" : "#556677"
                                 elide: Text.ElideRight
                                 visible: text !== ""
+                                Behavior on color { ColorAnimation { duration: 400 } }
                             }
                         }
                     }
@@ -1028,7 +1065,7 @@ FocusScope {
                         property real borderExtra: 0
                         anchors.margins: vpx(-3.5) - borderExtra
                         border.width: vpx(1.5) + borderExtra
-                        border.color: "#c7c7c7"
+                        border.color: root.lightTheme ? "#05070a" : "#c7c7c7"
                         color: "transparent"
                         opacity: 0
 
@@ -1105,17 +1142,20 @@ FocusScope {
                 font.pixelSize: vpx(32)
                 font.bold: true
                 font.family: global.fonts.sans
-                color: "#ffffff"
+                color: root.lightTheme ? "#0d1117" : "#ffffff"
                 opacity: 0.95
 
                 text: "RetroAchievements"
+                Behavior on color { ColorAnimation { duration: 400 } }
 
                 Rectangle {
                     anchors { left: parent.right; leftMargin: vpx(12); verticalCenter: parent.verticalCenter }
                     width: vpx(20); height: vpx(20); radius: vpx(10)
                     color: "transparent"
-                    border.width: vpx(2); border.color: "#57cbde"
+                    border.width: vpx(2)
+                    border.color: root.lightTheme ? "#1a6b7a" : "#57cbde"
                     visible: root._raLoading
+                    Behavior on border.color { ColorAnimation { duration: 400 } }
                     RotationAnimator on rotation {
                         running: root._raLoading
                         loops: Animation.Infinite; from: 0; to: 360; duration: 900
@@ -1146,19 +1186,19 @@ FocusScope {
                 model: Math.min(root._raRecentGames.length, 4)
 
                 readonly property real cardW: (width - vpx(16) * 3) / 4
-                readonly property real imgH:  vpx(160)
+                readonly property real imgH: vpx(160)
 
                 delegate: Item {
                     id: _raCell
 
                     readonly property bool isCurrent: ListView.isCurrentItem
-                    readonly property var  _rg: root._raRecentGames[index] || {}
+                    readonly property var _rg: root._raRecentGames[index] || {}
 
                     width: _raStrip.cardW
                     height: _raStrip.height
                     scale: isCurrent && _raStrip.activeFocus ? 1.05 : 1.0
                     opacity: isCurrent ? 1.0 : (_raStrip.activeFocus ? 1.0 : 0.98)
-                    Behavior on scale   { NumberAnimation { duration: 120 } }
+                    Behavior on scale { NumberAnimation { duration: 120 } }
                     Behavior on opacity { NumberAnimation { duration: 150 } }
 
                     Item {
@@ -1170,7 +1210,7 @@ FocusScope {
                         Image {
                             id: _raArt
                             width: parent.width
-                            height:parent.height * 1.2
+                            height: parent.height * 1.2
                             fillMode: Image.PreserveAspectCrop
                             asynchronous: true; smooth: true
                             source: _raCell._rg.imgTitle || _raCell._rg.imgIcon || ""
@@ -1188,7 +1228,8 @@ FocusScope {
                             top: _raImgArea.bottom
                             left: parent.left; right: parent.right; bottom: parent.bottom
                         }
-                        color: "#121926"
+                        color: root.lightTheme ? "#dde1e8" : "#121926"
+                        Behavior on color { ColorAnimation { duration: 400 } }
 
                         Column {
                             anchors {
@@ -1204,8 +1245,9 @@ FocusScope {
                                 font.pixelSize: vpx(12)
                                 font.bold: true
                                 font.family: global.fonts.sans
-                                color: "#ffffff"
+                                color: root.lightTheme ? "#0d1117" : "#ffffff"
                                 elide: Text.ElideRight
+                                Behavior on color { ColorAnimation { duration: 400 } }
                             }
 
                             Text {
@@ -1213,8 +1255,9 @@ FocusScope {
                                 text: _raCell._rg.consoleName || ""
                                 font.pixelSize: vpx(11)
                                 font.family: global.fonts.sans
-                                color: "#57cbde"
+                                color: root.lightTheme ? "#1a6b7a" : "#57cbde"
                                 elide: Text.ElideRight
+                                Behavior on color { ColorAnimation { duration: 400 } }
                             }
 
                             Text {
@@ -1223,8 +1266,9 @@ FocusScope {
                                 text: "Last played " + (_raCell._rg.lastPlayed || "")
                                 font.pixelSize: vpx(10)
                                 font.family: global.fonts.sans
-                                color: "#667788"
+                                color: root.lightTheme ? "#5a6472" : "#667788"
                                 elide: Text.ElideRight
+                                Behavior on color { ColorAnimation { duration: 400 } }
                             }
                         }
                     }
@@ -1259,7 +1303,7 @@ FocusScope {
                         property real borderExtra: 0
                         anchors.margins: vpx(-3.5) - borderExtra
                         border.width: vpx(1.5) + borderExtra
-                        border.color: "#c7c7c7"
+                        border.color: root.lightTheme ? "#05070a" : "#c7c7c7"
                         color: "transparent"
                         opacity: 0
 
@@ -1273,7 +1317,7 @@ FocusScope {
                         SequentialAnimation on borderExtra {
                             id: _raBorderPulse; running: false
                             NumberAnimation { to: vpx(3.5); duration: 150; easing.type: Easing.OutQuad }
-                            NumberAnimation { to: 0;        duration: 250; easing.type: Easing.InQuad }
+                            NumberAnimation { to: 0; duration: 250; easing.type: Easing.InQuad }
                         }
                     }
 
@@ -1289,7 +1333,7 @@ FocusScope {
                     }
                 }
 
-                Keys.onLeftPressed:  { if (currentIndex > 0) currentIndex--; event.accepted = true; }
+                Keys.onLeftPressed: { if (currentIndex > 0) currentIndex--; event.accepted = true; }
                 Keys.onRightPressed: { if (currentIndex < count - 1) currentIndex++; event.accepted = true; }
                 Keys.onUpPressed: {
                     event.accepted = true;

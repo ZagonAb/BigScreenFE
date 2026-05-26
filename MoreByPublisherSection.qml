@@ -1,4 +1,4 @@
-// WTF-Library Theme
+// BigScreenFE Theme
 // Copyright (C) 2026 Gonzalo
 //
 // Licensed under Creative Commons
@@ -13,6 +13,20 @@ Item {
     id: root
 
     property var game: null
+    property bool lightTheme: false
+
+    readonly property color _textPrimary: lightTheme ? "#0d1117" : "#ffffff"
+    readonly property color _textSecondary: lightTheme ? "#2a6080" : "#8ab4c8"
+    readonly property color _textMuted: lightTheme ? "#5a6472" : "#7a8a94"
+    readonly property color _titleColor: lightTheme ? "#0d1117" : "#607d8b"
+    readonly property color _cardBg: lightTheme ? Qt.rgba(0.93, 0.95, 0.97, 0.97) : Qt.rgba(0.07, 0.10, 0.15, 0.96)
+    readonly property color _badgeBg: lightTheme ? "#c8ecd4" : "#1a3320"
+    readonly property color _badgeText: lightTheme ? "#00a65a" : "#00e676"
+    readonly property color _ratingStar: lightTheme ? "#05070a" : "#ffffff"
+    readonly property color _playIcon: lightTheme ? "#1a6b7a" : "#57cbde"
+    readonly property color _newBadgeBg: lightTheme ? "#c0dce8" : "#1a3a4a"
+    readonly property color _newBadgeText: lightTheme ? "#1a6b7a" : "#57cbde"
+    readonly property color _separator: lightTheme ? "#22000000" : "#22ffffff"
 
     readonly property bool hasGrid: hasGames
     readonly property bool gridActiveFocus: _grid.activeFocus
@@ -35,7 +49,7 @@ Item {
         if (_publisher === "") return [];
 
         var unplayed = [];
-        var played   = [];
+        var played = [];
 
         for (var i = 0; i < api.allGames.count; i++) {
             var g = api.allGames.get(i);
@@ -48,7 +62,7 @@ Item {
             if (pub.toLowerCase() !== _publisher.toLowerCase()) continue;
 
             if (g.playCount === 0) unplayed.push(g);
-            else                   played.push(g);
+            else played.push(g);
         }
 
         function sortGroup(arr) {
@@ -62,8 +76,7 @@ Item {
     }
 
     readonly property bool hasGames: _games.length > 0
-    implicitHeight: hasGames ? _title.height + vpx(14) + _grid.height
-                             : _title.height + vpx(14) + vpx(60)
+    implicitHeight: hasGames ? _title.height + vpx(14) + _grid.height : _title.height + vpx(14) + vpx(60)
     visible: true
 
     Text {
@@ -72,7 +85,8 @@ Item {
         text: "MORE BY " + root._publisher.toUpperCase()
         font.pixelSize: vpx(13); font.bold: true
         font.letterSpacing: vpx(0.8); font.family: global.fonts.sans
-        color: "#607d8b"
+        color: _titleColor
+        Behavior on color { ColorAnimation { duration: 300; easing.type: Easing.InOutQuad } }
     }
 
     Text {
@@ -80,7 +94,8 @@ Item {
         visible: !root.hasGames
         text: "No other games found for this publisher."
         font.pixelSize: vpx(13); font.family: global.fonts.sans
-        color: "#ffffff"
+        color: _textPrimary
+        Behavior on color { ColorAnimation { duration: 300 } }
     }
 
     GridView {
@@ -89,12 +104,12 @@ Item {
         anchors { top: _title.bottom; left: parent.left; right: parent.right; topMargin: vpx(14) }
 
         readonly property real cardW: Math.floor((width - vpx(30) * 3) / 4)
-        readonly property real imgH:  Math.round(cardW * 0.70)
+        readonly property real imgH: Math.round(cardW * 0.70)
         readonly property real cardH: imgH
 
         cellWidth: cardW + vpx(20)
         cellHeight: cardH + vpx(10)
-        height:  Math.ceil(root._games.length / 4) * cellHeight - vpx(10)
+        height: Math.ceil(root._games.length / 4) * cellHeight - vpx(10)
 
         model: root._games.length
         interactive: false
@@ -111,7 +126,7 @@ Item {
             if (next < root._games.length) { currentIndex = next; event.accepted = true; }
             else { event.accepted = true; }
         }
-        Keys.onLeftPressed:  { if (currentIndex > 0) currentIndex--; event.accepted = true; }
+        Keys.onLeftPressed: { if (currentIndex > 0) currentIndex--; event.accepted = true; }
         Keys.onRightPressed: { if (currentIndex < root._games.length - 1) currentIndex++; event.accepted = true; }
 
         Keys.onPressed: {
@@ -135,21 +150,30 @@ Item {
         delegate: Item {
             id: _card
             readonly property bool isCurrent: GridView.isCurrentItem && _grid.activeFocus
-            readonly property var  _game:     root._games[index] || null
+            readonly property var _game: root._games[index] || null
 
             width: _grid.cardW
             height: _grid.cardH
+            scale: isCurrent ? 1.05 : 1.0
+            opacity: isCurrent ? 1.0 : (_grid.activeFocus ? 0.65 : 0.80)
+            Behavior on scale { NumberAnimation { duration: 120 } }
+            Behavior on opacity { NumberAnimation { duration: 150 } }
 
             Item {
                 id: _glowSrc; anchors.fill: parent; visible: false
                 Rectangle { anchors.fill: parent; color: "#1a1a1a" }
-                Image { anchors.fill: parent; source: _art.source; fillMode: Image.PreserveAspectCrop; asynchronous: true; smooth: true }
+                Image {
+                    anchors.fill: parent
+                    source: _art.source
+                    fillMode: Image.PreserveAspectCrop
+                    asynchronous: true
+                    smooth: true
+                }
             }
-
             FastBlur {
                 anchors.fill: _glowSrc; anchors.margins: vpx(-16)
                 source: _glowSrc; radius: 72; transparentBorder: true
-                opacity: _card.isCurrent ? 0.40 : 0.0
+                opacity: isCurrent ? 0.40 : 0.0
                 Behavior on opacity { NumberAnimation { duration: 180 } }
             }
 
@@ -168,9 +192,14 @@ Item {
                         var g = _card._game;
                         if (!g) return "";
                         return g.assets.background || g.assets.screenshot
-                             || g.assets.banner     || g.assets.titlescreen || "";
+                        || g.assets.banner || g.assets.titlescreen || "";
                     }
-                    Rectangle { anchors.fill: parent; color: "#1c2533"; visible: parent.status !== Image.Ready }
+                    Rectangle {
+                        anchors.fill: parent
+                        color: lightTheme ? "#c8cdd5" : "#1c2533"
+                        visible: parent.status !== Image.Ready
+                        Behavior on color { ColorAnimation { duration: 300 } }
+                    }
                 }
 
                 Image {
@@ -188,89 +217,191 @@ Item {
                     anchors { right: parent.right; top: parent.top; margins: vpx(4) }
                     width: vpx(22); height: vpx(22)
                     visible: _card._game ? _card._game.favorite === true : false
-                    Rectangle { anchors.fill: parent; radius: width/2; color: Qt.rgba(0,0,0,0.70) }
+                    Rectangle {
+                        anchors.fill: parent; radius: width/2
+                        color: Qt.rgba(0, 0, 0, 0.70)
+                    }
                     Image {
                         id: _favIco; anchors.centerIn: parent; width: vpx(14); height: vpx(14)
                         source: "assets/icons/favorite.svg"; fillMode: Image.PreserveAspectFit; mipmap: true; visible: false
                     }
-                    ColorOverlay { anchors.fill: _favIco; source: _favIco; color: "#00ff08" }
+                    ColorOverlay {
+                        anchors.fill: _favIco; source: _favIco; color: "#00ff08"
+                    }
                 }
             }
 
             Rectangle {
-                anchors { top: _imgArea.bottom; left: parent.left; right: parent.right }
-                height: vpx(85)
-                color: Qt.rgba(0.07, 0.10, 0.15, 0.96)
+                id: _infoPanel
+                anchors {
+                    top: _imgArea.bottom
+                    left: parent.left
+                    right: parent.right
+                    bottom: parent.bottom
+                }
+                color: _cardBg
+                Behavior on color { ColorAnimation { duration: 400 } }
 
                 Column {
-                    anchors { left: parent.left; right: parent.right; top: parent.top; margins: vpx(6) }
-                    spacing: vpx(3)
+                    anchors {
+                        left: parent.left
+                        right: parent.right
+                        top: parent.top
+                        margins: vpx(8)
+                        topMargin: vpx(6)
+                    }
+                    spacing: vpx(2)
 
                     Text {
                         width: parent.width
                         text: _card._game ? _card._game.title : ""
-                        font.pixelSize: vpx(13); font.bold: true; font.family: global.fonts.sans
-                        color: "#ffffff"; elide: Text.ElideRight
+                        font.pixelSize: vpx(16)
+                        font.bold: true
+                        font.family: global.fonts.sans
+                        color: _textPrimary
+                        elide: Text.ElideRight
+                        visible: _logo.visible
+                        Behavior on color { ColorAnimation { duration: 400 } }
+                    }
+
+                    Text {
+                        width: parent.width
+                        text: _card._game && _card._game.developer !== "" ? _card._game.developer : ""
+                        font.pixelSize: vpx(12)
+                        font.family: global.fonts.sans
+                        color: _textSecondary
+                        elide: Text.ElideRight
+                        visible: text !== ""
+                        Behavior on color { ColorAnimation { duration: 400 } }
+                    }
+
+                    Text {
+                        width: parent.width
+                        text: _card._game && _card._game.genre !== "" ? _card._game.genre : ""
+                        font.pixelSize: vpx(12)
+                        font.family: global.fonts.sans
+                        color: _textMuted
+                        elide: Text.ElideRight
+                        visible: text !== ""
+                        Behavior on color { ColorAnimation { duration: 400 } }
+                    }
+
+                    Rectangle {
+                        width: parent.width
+                        height: vpx(1)
+                        color: _separator
+                        Behavior on color { ColorAnimation { duration: 400 } }
+                    }
+
+                    Row {
+                        width: parent.width
+                        spacing: vpx(6)
+
+                        Row {
+                            spacing: vpx(2)
+                            anchors.verticalCenter: parent.verticalCenter
+                            visible: _card._game ? (_card._game.rating > 0) : false
+
+                            Repeater {
+                                model: 5
+                                Item {
+                                    width: vpx(16)
+                                    height: vpx(16)
+                                    anchors.verticalCenter: parent.verticalCenter
+
+                                    Image {
+                                        id: _starIcon
+                                        anchors.fill: parent
+                                        property real threshold: (index + 1) / 5
+                                        property real r: _card._game ? _card._game.rating : 0
+                                        property real half: threshold - 0.1
+                                        source: r >= threshold ? "assets/icons/star1.png"
+                                        : r >= half ? "assets/icons/star2.png"
+                                        : "assets/icons/star0.png"
+                                        fillMode: Image.PreserveAspectFit
+                                        mipmap: true; smooth: true
+                                        visible: false
+                                    }
+                                    ColorOverlay {
+                                        anchors.fill: _starIcon
+                                        source: _starIcon
+                                        color: _ratingStar
+                                        Behavior on color { ColorAnimation { duration: 400 } }
+                                    }
+                                }
+                            }
+                        }
+
+                        Item { width: vpx(2); height: vpx(1) }
+
+                        Row {
+                            spacing: vpx(3)
+                            anchors.verticalCenter: parent.verticalCenter
+                            visible: _card._game ? (_card._game.playCount > 0) : false
+
+                            Text {
+                                text: "▶"
+                                font.pixelSize: vpx(12)
+                                color: _playIcon
+                                anchors.verticalCenter: parent.verticalCenter
+                                Behavior on color { ColorAnimation { duration: 400 } }
+                            }
+                            Text {
+                                text: _card._game ? _card._game.playCount + "×" : ""
+                                font.pixelSize: vpx(14)
+                                font.family: global.fonts.sans
+                                color: _playIcon
+                                Behavior on color { ColorAnimation { duration: 400 } }
+                            }
+                        }
+
+                        Rectangle {
+                            width: _neverText.width + vpx(8)
+                            height: vpx(18)
+                            radius: vpx(3)
+                            color: _newBadgeBg
+                            anchors.verticalCenter: parent.verticalCenter
+                            visible: _card._game ? (_card._game.playCount === 0) : false
+                            Behavior on color { ColorAnimation { duration: 400 } }
+
+                            Text {
+                                id: _neverText
+                                anchors.centerIn: parent
+                                text: "NEW"
+                                font.pixelSize: vpx(12)
+                                font.bold: true
+                                font.family: global.fonts.sans
+                                color: _newBadgeText
+                                Behavior on color { ColorAnimation { duration: 400 } }
+                            }
+                        }
                     }
 
                     Text {
                         width: parent.width
                         text: (_card._game && _card._game.collections.count > 0) ? _card._game.collections.get(0).name : ""
-                        font.pixelSize: vpx(11); font.family: global.fonts.sans
-                        color: "#556677"; elide: Text.ElideRight; visible: text !== ""
-                    }
-
-                    Row {
-                        spacing: vpx(2)
-                        visible: _card._game ? (_card._game.rating > 0) : false
-                        Repeater {
-                            model: 5
-                            Image {
-                                property real threshold: (index + 1) / 5
-                                property real r: _card._game ? _card._game.rating : 0
-                                property real half: threshold - 0.1
-                                source: r >= threshold ? "assets/icons/star1.png"
-                                      : r >= half      ? "assets/icons/star2.png"
-                                      :                  "assets/icons/star0.png"
-                                width: vpx(13); height: vpx(13)
-                                fillMode: Image.PreserveAspectFit; mipmap: true; smooth: true
-                                anchors.verticalCenter: parent.verticalCenter
-                            }
-                        }
-                    }
-
-                    Row {
-                        spacing: vpx(4)
-                        Rectangle {
-                            width: _newTxt.width + vpx(8); height: vpx(16); radius: vpx(3); color: "#1a3a4a"
-                            visible: _card._game ? (_card._game.playCount === 0) : false
-                            Text { id: _newTxt; anchors.centerIn: parent; text: "NEW"
-                                font.pixelSize: vpx(10); font.bold: true; font.family: global.fonts.sans; color: "#57cbde" }
-                        }
-                        Row {
-                            spacing: vpx(3); visible: _card._game ? (_card._game.playCount > 0) : false
-                            Text { text: "▶"; font.pixelSize: vpx(10); color: "#57cbde"; anchors.verticalCenter: parent.verticalCenter }
-                            Text { text: _card._game ? _card._game.playCount + "×" : ""; font.pixelSize: vpx(11); font.family: global.fonts.sans; color: "#57cbde" }
-                        }
+                        font.pixelSize: vpx(12)
+                        font.family: global.fonts.sans
+                        color: _textMuted
+                        elide: Text.ElideRight
+                        visible: text !== ""
+                        Behavior on color { ColorAnimation { duration: 400 } }
                     }
                 }
             }
 
             Rectangle {
                 id: _selRect
+                anchors.fill: parent
                 property real borderExtra: 0
-                property real _m: vpx(2) + borderExtra
-                x: -_m
-                y: -_m
-                width: _card.width + _m * 2
-                height: _imgArea.height + vpx(85) + _m * 2
+                anchors.margins: vpx(-3.5) - borderExtra
                 border.width: vpx(1.5) + borderExtra
-                border.color: "#c7c7c7"
+                border.color: lightTheme ? "#05070a" : "#c7c7c7"
                 color: "transparent"
                 opacity: 0
 
                 SequentialAnimation on opacity {
-                    running: _card.isCurrent
+                    running: isCurrent && _grid.activeFocus
                     loops: Animation.Infinite
                     NumberAnimation { to: 0.8; duration: 600; easing.type: Easing.InOutQuad }
                     NumberAnimation { to: 0.3; duration: 600; easing.type: Easing.InOutQuad }
@@ -279,16 +410,11 @@ Item {
                 SequentialAnimation on borderExtra {
                     id: _borderPulse; running: false
                     NumberAnimation { to: vpx(3.5); duration: 150; easing.type: Easing.OutQuad }
-                    NumberAnimation { to: 0;        duration: 250; easing.type: Easing.InQuad }
+                    NumberAnimation { to: 0; duration: 250; easing.type: Easing.InQuad }
                 }
             }
 
             onIsCurrentChanged: { if (isCurrent) _borderPulse.restart(); }
-
-            scale: isCurrent ? 1.05 : 1.0
-            opacity: isCurrent ? 1.0  : (_grid.activeFocus ? 0.65 : 0.80)
-            Behavior on scale { NumberAnimation { duration: 120 } }
-            Behavior on opacity { NumberAnimation { duration: 150 } }
 
             MouseArea {
                 anchors.fill: parent

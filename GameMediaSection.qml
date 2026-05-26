@@ -1,4 +1,4 @@
-// WTF-Library Theme
+// BigScreenFE Theme
 // Copyright (C) 2026 Gonzalo
 //
 // Licensed under Creative Commons
@@ -13,12 +13,25 @@ FocusScope {
     id: root
 
     property var game: null
+    property bool lightTheme: false
+
+    readonly property color _headerColor: lightTheme ? "#1a6b7a" : "#607d8b"
+    readonly property color _countColor: lightTheme ? "#5a6472" : "#3a4a56"
+    readonly property color _emptyText: lightTheme ? "#5a6472" : "#3a4a56"
+    readonly property color _cardBg: lightTheme ? "#f8f9fc" : "#0d1921"
+    readonly property color _glowBg: lightTheme ? "#e2e8f0" : "#1c222b"
+    readonly property color _selectionBorder: lightTheme ? "#0d1117" : "#c7c7c7"
+    readonly property color _textOverlay: lightTheme ? "#dd000000" : "#ddffffff"
+    readonly property color _labelText: lightTheme ? "#dd000000" : "#ccffffff"
+    readonly property color _videoOverlayBg: lightTheme ? "#cc000000" : "#99000000"
+    readonly property color _videoBorder: lightTheme ? "#aa000000" : "#88ffffff"
+    readonly property color _playIconColor: lightTheme ? "#000000" : "#ffffff"
 
     signal tabFocusRequested()
     signal mediaViewRequested(var mediaList, int startIndex)
 
     property bool gridActiveFocus: _grid.activeFocus
-    property bool hasGrid:         availableMedia.length > 0
+    property bool hasGrid: availableMedia.length > 0
 
     function gridFocusAtZero() {
         _grid.currentIndex = 0
@@ -29,87 +42,85 @@ FocusScope {
 
     property var availableMedia: {
         if (!game) return []
-        var assets = game.assets
-        var all = []
+            var assets = game.assets
+            var all = []
 
-        if (assets.screenshotList && assets.screenshotList.length > 0) {
-            for (var i = 0; i < assets.screenshotList.length; i++) {
-                var ss = assets.screenshotList[i]
-                if (ss && ss.toString() !== "")
-                    all.push({ source: ss,
-                               label: "Screenshot" + (assets.screenshotList.length > 1 ? " "+(i+1) : ""),
-                               isVideo: false, orderPriority: 1 })
-            }
-        } else if (assets.screenshot && assets.screenshot.toString() !== "") {
-            all.push({ source: assets.screenshot, label: "Screenshot",
-                       isVideo: false, orderPriority: 1 })
-        }
-
-        // --- Title screens ---
-        if (assets.titlescreenList && assets.titlescreenList.length > 0) {
-            for (var j = 0; j < assets.titlescreenList.length; j++) {
-                var ts = assets.titlescreenList[j]
-                if (ts && ts.toString() !== "")
-                    all.push({ source: ts,
-                               label: "Title Screen" + (assets.titlescreenList.length > 1 ? " "+(j+1) : ""),
-                               isVideo: false, orderPriority: 2 })
-            }
-        } else if (assets.titlescreen && assets.titlescreen.toString() !== "") {
-            all.push({ source: assets.titlescreen, label: "Title Screen",
-                       isVideo: false, orderPriority: 2 })
-        }
-
-        // --- Other image assets ---
-        var others = [
-            { prop: "logo",         label: "Logo",        p: 3  },
-            { prop: "boxFront",     label: "Box Front",   p: 4  },
-            { prop: "boxFull",      label: "Box Full",    p: 5  },
-            { prop: "boxBack",      label: "Box Back",    p: 6  },
-            { prop: "boxSpine",     label: "Box Spine",   p: 7  },
-            { prop: "background",   label: "Background",  p: 8  },
-            { prop: "banner",       label: "Banner",      p: 9  },
-            { prop: "poster",       label: "Poster",      p: 10 },
-            { prop: "tile",         label: "Tile",        p: 11 },
-            { prop: "steam",        label: "Steam Grid",  p: 12 },
-            { prop: "marquee",      label: "Marquee",     p: 13 },
-            { prop: "bezel",        label: "Bezel",       p: 14 },
-            { prop: "panel",        label: "Panel",       p: 15 },
-            { prop: "cabinetLeft",  label: "Cabinet L",   p: 16 },
-            { prop: "cabinetRight", label: "Cabinet R",   p: 17 },
-            { prop: "cartridge",    label: "Cartridge",   p: 18 }
-        ]
-        for (var k = 0; k < others.length; k++) {
-            var a  = others[k]
-            var ln = a.prop + "List"
-            if (assets[ln] && assets[ln].length > 0) {
-                for (var l = 0; l < assets[ln].length; l++) {
-                    var ls = assets[ln][l]
-                    if (ls && ls.toString() !== "")
-                        all.push({ source: ls,
-                                   label: a.label + (assets[ln].length > 1 ? " "+(l+1) : ""),
-                                   isVideo: false, orderPriority: a.p })
+            if (assets.screenshotList && assets.screenshotList.length > 0) {
+                for (var i = 0; i < assets.screenshotList.length; i++) {
+                    var ss = assets.screenshotList[i]
+                    if (ss && ss.toString() !== "")
+                        all.push({ source: ss,
+                            label: "Screenshot" + (assets.screenshotList.length > 1 ? " "+(i+1) : ""),
+                                 isVideo: false, orderPriority: 1 })
                 }
-            } else if (assets[a.prop] && assets[a.prop].toString() !== "") {
-                all.push({ source: assets[a.prop], label: a.label,
-                           isVideo: false, orderPriority: a.p })
+            } else if (assets.screenshot && assets.screenshot.toString() !== "") {
+                all.push({ source: assets.screenshot, label: "Screenshot",
+                    isVideo: false, orderPriority: 1 })
             }
-        }
 
-        if (assets.videoList && assets.videoList.length > 0) {
-            for (var m = 0; m < assets.videoList.length; m++) {
-                var vs = assets.videoList[m]
-                if (vs && vs.toString() !== "")
-                    all.push({ source: vs,
-                               label: "Video" + (assets.videoList.length > 1 ? " "+(m+1) : ""),
-                               isVideo: true, orderPriority: 99 })
+            if (assets.titlescreenList && assets.titlescreenList.length > 0) {
+                for (var j = 0; j < assets.titlescreenList.length; j++) {
+                    var ts = assets.titlescreenList[j]
+                    if (ts && ts.toString() !== "")
+                        all.push({ source: ts,
+                            label: "Title Screen" + (assets.titlescreenList.length > 1 ? " "+(j+1) : ""),
+                                 isVideo: false, orderPriority: 2 })
+                }
+            } else if (assets.titlescreen && assets.titlescreen.toString() !== "") {
+                all.push({ source: assets.titlescreen, label: "Title Screen",
+                    isVideo: false, orderPriority: 2 })
             }
-        } else if (assets.video && assets.video.toString() !== "") {
-            all.push({ source: assets.video, label: "Video",
-                       isVideo: true, orderPriority: 99 })
-        }
 
-        all.sort(function(a, b) { return a.orderPriority - b.orderPriority })
-        return all
+            var others = [
+                { prop: "logo", label: "Logo", p: 3 },
+                { prop: "boxFront", label: "Box Front", p: 4 },
+                { prop: "boxFull", label: "Box Full", p: 5 },
+                { prop: "boxBack", label: "Box Back", p: 6 },
+                { prop: "boxSpine", label: "Box Spine", p: 7 },
+                { prop: "background", label: "Background", p: 8 },
+                { prop: "banner", label: "Banner", p: 9 },
+                { prop: "poster", label: "Poster", p: 10 },
+                { prop: "tile", label: "Tile", p: 11 },
+                { prop: "steam", label: "Steam Grid", p: 12 },
+                { prop: "marquee", label: "Marquee", p: 13 },
+                { prop: "bezel", label: "Bezel", p: 14 },
+                { prop: "panel", label: "Panel", p: 15 },
+                { prop: "cabinetLeft", label: "Cabinet L", p: 16 },
+                { prop: "cabinetRight", label: "Cabinet R", p: 17 },
+                { prop: "cartridge", label: "Cartridge", p: 18 }
+            ]
+            for (var k = 0; k < others.length; k++) {
+                var a = others[k]
+                var ln = a.prop + "List"
+                if (assets[ln] && assets[ln].length > 0) {
+                    for (var l = 0; l < assets[ln].length; l++) {
+                        var ls = assets[ln][l]
+                        if (ls && ls.toString() !== "")
+                            all.push({ source: ls,
+                                label: a.label + (assets[ln].length > 1 ? " "+(l+1) : ""),
+                                     isVideo: false, orderPriority: a.p })
+                    }
+                } else if (assets[a.prop] && assets[a.prop].toString() !== "") {
+                    all.push({ source: assets[a.prop], label: a.label,
+                        isVideo: false, orderPriority: a.p })
+                }
+            }
+
+            if (assets.videoList && assets.videoList.length > 0) {
+                for (var m = 0; m < assets.videoList.length; m++) {
+                    var vs = assets.videoList[m]
+                    if (vs && vs.toString() !== "")
+                        all.push({ source: vs,
+                            label: "Video" + (assets.videoList.length > 1 ? " "+(m+1) : ""),
+                                 isVideo: true, orderPriority: 99 })
+                }
+            } else if (assets.video && assets.video.toString() !== "") {
+                all.push({ source: assets.video, label: "Video",
+                    isVideo: true, orderPriority: 99 })
+            }
+
+            all.sort(function(a, b) { return a.orderPriority - b.orderPriority })
+            return all
     }
 
     Row {
@@ -119,20 +130,22 @@ FocusScope {
 
         Text {
             text: "MEDIA"
-            color: "#607d8b"
+            color: _headerColor
             font.family: global.fonts.sans
             font.pixelSize: vpx(11)
             font.bold: true
             font.letterSpacing: vpx(1.2)
             anchors.verticalCenter: parent.verticalCenter
+            Behavior on color { ColorAnimation { duration: 300 } }
         }
 
         Text {
             text: root.availableMedia.length > 0 ? ("" + root.availableMedia.length) : ""
-            color: "#3a4a56"
+            color: _countColor
             font.family: global.fonts.sans
             font.pixelSize: vpx(11)
             anchors.verticalCenter: parent.verticalCenter
+            Behavior on color { ColorAnimation { duration: 300 } }
         }
     }
 
@@ -140,9 +153,10 @@ FocusScope {
         anchors { top: _header.bottom; topMargin: vpx(20); horizontalCenter: parent.horizontalCenter }
         visible: root.availableMedia.length === 0
         text: "No media available for this game"
-        color: "#3a4a56"
+        color: _emptyText
         font.family: global.fonts.sans
         font.pixelSize: vpx(13)
+        Behavior on color { ColorAnimation { duration: 300 } }
     }
 
     GridView {
@@ -152,11 +166,11 @@ FocusScope {
             left: parent.left; right: parent.right
         }
 
-        readonly property int  _columns: 4
+        readonly property int _columns: 4
         readonly property real _cellW: Math.floor(parent.width / _columns)
-        cellWidth:  _cellW
+        cellWidth: _cellW
         cellHeight: Math.floor(_cellW * 9 / 16)
-        height:     cellHeight * 2
+        height: cellHeight * 2
         clip: false
         focus: true
         keyNavigationEnabled: true
@@ -184,13 +198,13 @@ FocusScope {
 
         delegate: Item {
             id: _cell
-            width:  _grid.cellWidth
+            width: _grid.cellWidth
             height: _grid.cellHeight
 
             readonly property bool isCurrent: _grid.activeFocus && _grid.currentIndex === index
             readonly property string _thumbSrc: modelData.isVideo
-                ? (root.game ? (root.game.assets.screenshot || root.game.assets.background || "") : "")
-                : modelData.source
+            ? (root.game ? (root.game.assets.screenshot || root.game.assets.background || "") : "")
+            : modelData.source
 
             Item {
                 id: _glowSource
@@ -199,7 +213,8 @@ FocusScope {
 
                 Rectangle {
                     anchors.fill: parent
-                    color: "#1c222b"
+                    color: _glowBg
+                    Behavior on color { ColorAnimation { duration: 300 } }
                 }
                 Image {
                     anchors.fill: parent
@@ -223,7 +238,8 @@ FocusScope {
                 id: _card
                 anchors { fill: parent; margins: vpx(10) }
                 radius: vpx(0)
-                color: "#0d1921"
+                color: _cardBg
+                Behavior on color { ColorAnimation { duration: 300 } }
                 layer.enabled: true
 
                 Image {
@@ -242,8 +258,8 @@ FocusScope {
                     Image {
                         anchors.fill: parent
                         source: root.game
-                                ? (root.game.assets.screenshot || root.game.assets.background || "")
-                                : ""
+                        ? (root.game.assets.screenshot || root.game.assets.background || "")
+                        : ""
                         fillMode: Image.PreserveAspectCrop
                         asynchronous: true
                         smooth: true
@@ -254,9 +270,11 @@ FocusScope {
                         anchors.centerIn: parent
                         width: vpx(28); height: vpx(28)
                         radius: vpx(0)
-                        color: "#99000000"
+                        color: _videoOverlayBg
                         border.width: vpx(1)
-                        border.color: "#88ffffff"
+                        border.color: _videoBorder
+                        Behavior on color { ColorAnimation { duration: 300 } }
+                        Behavior on border.color { ColorAnimation { duration: 300 } }
 
                         Image {
                             id: _playIconImg
@@ -272,7 +290,8 @@ FocusScope {
                         ColorOverlay {
                             anchors.fill: _playIconImg
                             source: _playIconImg
-                            color: "#ddffffff"
+                            color: _playIconColor
+                            Behavior on color { ColorAnimation { duration: 300 } }
                         }
                     }
                 }
@@ -282,7 +301,7 @@ FocusScope {
                     height: vpx(24)
                     gradient: Gradient {
                         GradientStop { position: 0.0; color: "transparent" }
-                        GradientStop { position: 1.0; color: "#dd000000" }
+                        GradientStop { position: 1.0; color: _textOverlay }
                     }
                 }
 
@@ -292,11 +311,12 @@ FocusScope {
                         leftMargin: vpx(5); rightMargin: vpx(5); bottomMargin: vpx(3)
                     }
                     text: modelData.label
-                    color: "#ccffffff"
+                    color: _labelText
                     font.family: global.fonts.sans
                     font.pixelSize: vpx(8)
                     font.bold: true
                     elide: Text.ElideRight
+                    Behavior on color { ColorAnimation { duration: 300 } }
                 }
             }
 
@@ -306,9 +326,10 @@ FocusScope {
                 property real _borderExtra: 0
                 border.width: vpx(1.5) + _borderExtra
                 color: "transparent"
-                border.color: "#c7c7c7"
+                border.color: _selectionBorder
                 radius: vpx(0)
                 opacity: 0
+                Behavior on border.color { ColorAnimation { duration: 300 } }
 
                 SequentialAnimation on opacity {
                     running: _cell.isCurrent
@@ -322,7 +343,7 @@ FocusScope {
                     id: _borderPulse
                     running: false
                     NumberAnimation { to: vpx(3.5); duration: 150; easing.type: Easing.OutQuad }
-                    NumberAnimation { to: 0;        duration: 250; easing.type: Easing.InQuad }
+                    NumberAnimation { to: 0; duration: 250; easing.type: Easing.InQuad }
                 }
             }
 

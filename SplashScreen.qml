@@ -1,4 +1,4 @@
-// WTF-Library Theme
+// BigScreenFE Theme
 // Copyright (C) 2026 Gonzalo
 //
 // Licensed under Creative Commons
@@ -12,13 +12,23 @@ import QtGraphicalEffects 1.15
 Rectangle {
     id: root
 
-    color: "#0b1117"
+    property bool lightTheme: false
+
+    readonly property color _bgColor: lightTheme ? "#dfe3e8" : "#0b1117"
+    readonly property color _accentColor: lightTheme ? "#1a6b7a" : "#4a9eff"
+    readonly property color _accentLight: lightTheme ? "#4a9eff" : "#4a9eff"
+    readonly property color _accentDim: lightTheme ? Qt.rgba(26,107,122,0.2) : Qt.rgba(74,158,255,0.2)
+    readonly property color _textColor: lightTheme ? "#0d1117" : "#ffffff"
+    readonly property color _glowColor: lightTheme ? Qt.rgba(13,17,23,0.3) : Qt.rgba(156,156,156,0.1)
+
+    color: _bgColor
     visible: opacity > 0
     opacity: 1.0
 
-    function hide() { root.opacity = 0; }
-
+    Behavior on color { ColorAnimation { duration: 300 } }
     Behavior on opacity { NumberAnimation { duration: 300 } }
+
+    function hide() { root.opacity = 0; }
 
     Column {
         anchors.centerIn: parent
@@ -30,20 +40,34 @@ Rectangle {
             width: vpx(200)
             height: vpx(200)
 
-            Image {
-                id: splashLogo
+            Item {
+                id: logoContainer
                 anchors.centerIn: parent
-                source: "assets/icons/icon_0.png"
                 width: vpx(120)
                 height: vpx(120)
-                fillMode: Image.PreserveAspectFit
-                mipmap: true
                 z: 2
+
+                Image {
+                    id: splashLogoSrc
+                    anchors.fill: parent
+                    source: "assets/icons/icon_0.png"
+                    fillMode: Image.PreserveAspectFit
+                    mipmap: true
+                    visible: false
+                }
+
+                ColorOverlay {
+                    id: splashLogoOverlay
+                    anchors.fill: parent
+                    source: splashLogoSrc
+                    color: _textColor
+                    Behavior on color { ColorAnimation { duration: 300 } }
+                }
 
                 layer.enabled: true
                 layer.effect: Glow {
                     samples: 100
-                    color: Qt.rgba(156/255, 156/255, 156/255, 0.1)
+                    color: _glowColor
                     spread: 0.1
                     radius: 80
                 }
@@ -75,17 +99,17 @@ Rectangle {
 
                     ctx.clearRect(0, 0, width, height);
 
-                    ctx.strokeStyle = "#4a9eff";
+                    ctx.strokeStyle = _accentLight;
                     ctx.lineWidth = lineWidth;
                     ctx.lineCap = "round";
 
                     ctx.beginPath();
                     ctx.arc(centerX, centerY, radius + lineWidth, 0, Math.PI * 2);
-                    ctx.strokeStyle = Qt.rgba(74/255, 158/255, 255/255, 0.2);
+                    ctx.strokeStyle = _accentDim;
                     ctx.stroke();
 
                     ctx.beginPath();
-                    ctx.strokeStyle = "#4a9eff";
+                    ctx.strokeStyle = _accentLight;
 
                     var startAngle = (angle * Math.PI / 180) - (arcLength * Math.PI / 360);
                     var endAngle = (angle * Math.PI / 180) + (arcLength * Math.PI / 360);
@@ -94,8 +118,8 @@ Rectangle {
                     ctx.stroke();
 
                     ctx.beginPath();
-                    ctx.fillStyle = "#4a9eff";
-                    ctx.shadowColor = "#4a9eff";
+                    ctx.fillStyle = _accentLight;
+                    ctx.shadowColor = _accentLight;
                     ctx.shadowBlur = 10;
 
                     var dotX = centerX + radius * Math.cos(angle * Math.PI / 180);
@@ -126,7 +150,7 @@ Rectangle {
                 layer.enabled: true
                 layer.effect: Glow {
                     samples: 50
-                    color: "#4a9eff"
+                    color: _accentLight
                     spread: 0.3
                     radius: 40
                 }
@@ -141,13 +165,13 @@ Rectangle {
                     width: vpx(6)
                     height: vpx(6)
                     radius: width/2
-                    color: "#4a9eff"
+                    color: _accentLight
                     opacity: 0.6
 
                     layer.enabled: true
                     layer.effect: Glow {
                         samples: 20
-                        color: "#4a9eff"
+                        color: _accentLight
                         spread: 0.2
                         radius: 16
                     }
@@ -157,15 +181,15 @@ Rectangle {
 
         Text {
             anchors.horizontalCenter: parent.horizontalCenter
-            text: "¡%$#@!-Library"
-            color: "#ffffff"
+            text: "BigScreenFE"
+            color: _textColor
             font.family: global.fonts.sans
             font.pixelSize: vpx(36)
 
             layer.enabled: true
             layer.effect: Glow {
                 samples: 100
-                color: Qt.rgba(156/255, 156/255, 156/255, 0.1)
+                color: _glowColor
                 spread: 0.1
                 radius: 80
             }
@@ -176,6 +200,7 @@ Rectangle {
                 NumberAnimation { from: 0.8; to: 1.0; duration: 800; easing.type: Easing.InOutQuad }
                 NumberAnimation { from: 1.0; to: 0.8; duration: 800; easing.type: Easing.InOutQuad }
             }
+            Behavior on color { ColorAnimation { duration: 300 } }
         }
     }
 }

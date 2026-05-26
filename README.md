@@ -1,4 +1,4 @@
-# WTF-LIBRARY
+# BigScreenFE
 
 -  A theme for Pegasus Frontend, inspired by the Big Picture Library.
 

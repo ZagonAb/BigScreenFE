@@ -1,4 +1,4 @@
-// WTF-Library Theme
+// BigScreenFE Theme
 // Copyright (C) 2026 Gonzalo
 //
 // Licensed under Creative Commons
@@ -20,44 +20,55 @@ FocusScope {
     signal sortMenuRequested()
     signal openHub(var game)
 
-    property var  gamesModel: api.allGames
+    property var gamesModel: api.allGames
     property bool isCollections: false
     property bool inCollectionGames: false
-    property var  activeCollectionGames: null
+    property var activeCollectionGames: null
     property string activeCollectionName: ""
-    readonly property var  currentEntry:  grid.currentItem ? grid.currentItem.entry : null
-    readonly property bool showingGames:  !isCollections || inCollectionGames
+    readonly property var currentEntry: grid.currentItem ? grid.currentItem.entry : null
+    readonly property bool showingGames: !isCollections || inCollectionGames
     property string currentSortId: "alpha_asc"
     property bool preserveSourceOrder: false
+    property bool lightTheme: false
 
     property string lastNavDirection: "right"
     property bool _restoringIndex: false
+
+    readonly property color _textPrimary: lightTheme ? "#0d1117" : "#ffffff"
+    readonly property color _textSecondary: lightTheme ? "#5a6472" : "#7e848c"
+    readonly property color _textMuted: lightTheme ? "#8b929a" : "#556677"
+    readonly property color _badgeBg: lightTheme ? "#e2e8f0" : "#2b3034"
+    readonly property color _badgeText: lightTheme ? "#0d1117" : "#ffffff"
+    readonly property color _selectionBorder: lightTheme ? "#0d1117" : "#c7c7c7"
+    readonly property color _dimOverlay: lightTheme ? Qt.rgba(1,1,1,0.90) : Qt.rgba(0,0,0,0.90)
+    readonly property color _fallbackBg: lightTheme ? "#c8cdd5" : "#1a1a1a"
+    readonly property color _emptyText: lightTheme ? "#5a6472" : "#555555"
 
     SortFilterProxyModel {
         id: sortProxy
 
         sourceModel: {
-            if (!root.isCollections)    return root.gamesModel
+            if (!root.isCollections) return root.gamesModel
                 if (root.inCollectionGames) return root.activeCollectionGames
                     return null
         }
 
         sorters: [
-            RoleSorter { roleName: "sortBy"; sortOrder: Qt.AscendingOrder;  enabled: !root.preserveSourceOrder && root.currentSortId === "alpha_asc"      },
-            RoleSorter { roleName: "sortBy"; sortOrder: Qt.DescendingOrder; enabled: !root.preserveSourceOrder && root.currentSortId === "alpha_desc"     },
-            RoleSorter { roleName: "rating"; sortOrder: Qt.DescendingOrder; enabled: !root.preserveSourceOrder && root.currentSortId === "rating_desc"    },
-            RoleSorter { roleName: "rating"; sortOrder: Qt.AscendingOrder;  enabled: !root.preserveSourceOrder && root.currentSortId === "rating_asc"     },
-            RoleSorter { roleName: "playTime"; sortOrder: Qt.DescendingOrder; enabled: !root.preserveSourceOrder && root.currentSortId === "playtime_desc"  },
-            RoleSorter { roleName: "playTime"; sortOrder: Qt.AscendingOrder;  enabled: !root.preserveSourceOrder && root.currentSortId === "playtime_asc"   },
-            RoleSorter { roleName: "releaseYear";sortOrder: Qt.DescendingOrder; enabled: !root.preserveSourceOrder && root.currentSortId === "release_desc"   },
-            RoleSorter { roleName: "releaseYear";sortOrder: Qt.AscendingOrder;  enabled: !root.preserveSourceOrder && root.currentSortId === "release_asc"    },
-            RoleSorter { roleName: "players"; sortOrder: Qt.DescendingOrder; enabled: !root.preserveSourceOrder && root.currentSortId === "players_desc"   }
+            RoleSorter { roleName: "sortBy"; sortOrder: Qt.AscendingOrder; enabled: !root.preserveSourceOrder && root.currentSortId === "alpha_asc" },
+            RoleSorter { roleName: "sortBy"; sortOrder: Qt.DescendingOrder; enabled: !root.preserveSourceOrder && root.currentSortId === "alpha_desc" },
+            RoleSorter { roleName: "rating"; sortOrder: Qt.DescendingOrder; enabled: !root.preserveSourceOrder && root.currentSortId === "rating_desc" },
+            RoleSorter { roleName: "rating"; sortOrder: Qt.AscendingOrder; enabled: !root.preserveSourceOrder && root.currentSortId === "rating_asc" },
+            RoleSorter { roleName: "playTime"; sortOrder: Qt.DescendingOrder; enabled: !root.preserveSourceOrder && root.currentSortId === "playtime_desc" },
+            RoleSorter { roleName: "playTime"; sortOrder: Qt.AscendingOrder; enabled: !root.preserveSourceOrder && root.currentSortId === "playtime_asc" },
+            RoleSorter { roleName: "releaseYear"; sortOrder: Qt.DescendingOrder; enabled: !root.preserveSourceOrder && root.currentSortId === "release_desc" },
+            RoleSorter { roleName: "releaseYear"; sortOrder: Qt.AscendingOrder; enabled: !root.preserveSourceOrder && root.currentSortId === "release_asc" },
+            RoleSorter { roleName: "players"; sortOrder: Qt.DescendingOrder; enabled: !root.preserveSourceOrder && root.currentSortId === "players_desc" }
         ]
     }
 
     property var effectiveModel: {
         if (root.isCollections && !root.inCollectionGames) return api.collections
-            if (sortProxy.sourceModel !== null)                return sortProxy
+            if (sortProxy.sourceModel !== null) return sortProxy
                 return root.gamesModel
     }
 
@@ -98,13 +109,11 @@ FocusScope {
         grid.currentIndex = (saved !== undefined) ? saved : 0
     }
 
-    readonly property int  columns: 6
-    readonly property real cellWidth:  Math.floor(width / columns)
+    readonly property int columns: 6
+    readonly property real cellWidth: Math.floor(width / columns)
     readonly property bool showingCollectionList: isCollections && !inCollectionGames
-    readonly property real gridAvailableHeight:   height
-    readonly property real cellHeight: showingCollectionList
-    ? Math.floor(gridAvailableHeight / 3.0)
-    : Math.floor(cellWidth * 1.4)
+    readonly property real gridAvailableHeight: height
+    readonly property real cellHeight: showingCollectionList ? Math.floor(gridAvailableHeight / 3.0) : Math.floor(cellWidth * 1.4)
 
     readonly property real contentY: grid.contentY
 
@@ -118,7 +127,7 @@ FocusScope {
             bottomMargin: vpx(10)
         }
         focus: true
-        clip:  false
+        clip: false
 
         model: root.effectiveModel
         cellWidth: root.cellWidth
@@ -132,49 +141,41 @@ FocusScope {
             width: root.cellWidth
             height: root.cellHeight
 
-            property var  entry: modelData
+            property var entry: modelData
             property bool isCurrent: GridView.isCurrentItem
 
             readonly property bool isGame: !root.showingCollectionList
 
             readonly property string sortBadgeText: {
                 if (root.preserveSourceOrder || !isGame || !entry) return ""
-                var sid = root.currentSortId
-                if (sid === "alpha_asc") return ""
-
-                if (sid === "alpha_desc") return "Z→A"
-
-                if (sid === "rating_desc" || sid === "rating_asc")
-                    return Math.round((entry.rating || 0) * 100) + "%"
-
-                if (sid === "playtime_desc" || sid === "playtime_asc") {
-                    var secs = entry.playTime || 0
-                    var h  = Math.floor(secs / 3600)
-                    var m  = Math.floor((secs % 3600) / 60)
-                    var s  = secs % 60
-                    return (h  < 10 ? "0" + h  : "" + h)  + ":" +
-                           (m  < 10 ? "0" + m  : "" + m)  + ":" +
-                           (s  < 10 ? "0" + s  : "" + s)
-                }
-
-                if (sid === "release_desc" || sid === "release_asc") {
-                    var y = entry.releaseYear || 0
-                    return y > 0 ? "" + y : ""
-                }
-
-                if (sid === "players_desc") {
-                    var p = entry.players || 1
-                    return "" + p
-                }
-
-                return ""
+                    var sid = root.currentSortId
+                    if (sid === "alpha_asc") return ""
+                        if (sid === "alpha_desc") return "Z→A"
+                            if (sid === "rating_desc" || sid === "rating_asc")
+                                return Math.round((entry.rating || 0) * 100) + "%"
+                                if (sid === "playtime_desc" || sid === "playtime_asc") {
+                                    var secs = entry.playTime || 0
+                                    var h = Math.floor(secs / 3600)
+                                    var m = Math.floor((secs % 3600) / 60)
+                                    var s = secs % 60
+                                    return (h < 10 ? "0" + h : "" + h) + ":" + (m < 10 ? "0" + m : "" + m) + ":" + (s < 10 ? "0" + s : "" + s)
+                                }
+                                if (sid === "release_desc" || sid === "release_asc") {
+                                    var y = entry.releaseYear || 0
+                                    return y > 0 ? "" + y : ""
+                                }
+                                if (sid === "players_desc") {
+                                    var p = entry.players || 1
+                                    return "" + p
+                                }
+                                return ""
             }
 
             property string consoleColor: {
-                if (!root.showingCollectionList) return "#1a1a1a"
-                    if (!entry || !entry.name) return "#1a1a1a"
+                if (!root.showingCollectionList) return _fallbackBg
+                    if (!entry || !entry.name) return _fallbackBg
                         var sn = entry.shortName || entry.name.toLowerCase()
-                        return consoleColors.data[sn] || "#1a1a1a"
+                        return consoleColors.data[sn] || _fallbackBg
             }
             property string systemLogoUrl: {
                 if (!root.showingCollectionList) return ""
@@ -196,9 +197,22 @@ FocusScope {
                 id: glowSource
                 anchors.fill: parent; anchors.margins: vpx(10)
                 visible: false
-                Rectangle { anchors.fill: parent; color: cell.consoleColor; visible: root.showingCollectionList; Behavior on color { ColorAnimation { duration: 200 } } }
-                Image { anchors.centerIn: parent; width: parent.width * 0.65; height: parent.height * 0.65; source: cell.systemLogoUrl; fillMode: Image.PreserveAspectFit; asynchronous: true; mipmap: true; visible: root.showingCollectionList }
-                Image { anchors.fill: parent; source: cell.coverUrl; fillMode: Image.PreserveAspectCrop; asynchronous: true; mipmap: true; visible: !root.showingCollectionList }
+                Rectangle {
+                    anchors.fill: parent
+                    color: cell.consoleColor
+                    visible: root.showingCollectionList
+                    Behavior on color { ColorAnimation { duration: 200 } }
+                }
+                Image {
+                    anchors.centerIn: parent; width: parent.width * 0.65; height: parent.height * 0.65
+                    source: cell.systemLogoUrl; fillMode: Image.PreserveAspectFit
+                    asynchronous: true; mipmap: true; visible: root.showingCollectionList
+                }
+                Image {
+                    anchors.fill: parent; source: cell.coverUrl
+                    fillMode: Image.PreserveAspectCrop; asynchronous: true; mipmap: true
+                    visible: !root.showingCollectionList
+                }
             }
             FastBlur {
                 id: glowBlur
@@ -207,38 +221,58 @@ FocusScope {
                 opacity: cell.isCurrent && grid.activeFocus ? 0.40 : 0.0
                 Behavior on opacity { NumberAnimation { duration: 180 } }
             }
+
             Image {
                 id: cover
                 anchors.fill: parent; anchors.margins: vpx(10)
-                source: cell.coverUrl; fillMode: Image.PreserveAspectCrop; asynchronous: true; mipmap: true
-                Rectangle { anchors.fill: parent; color: root.showingCollectionList ? cell.consoleColor : "#1a1a1a"; visible: cover.status !== Image.Ready; Behavior on color { ColorAnimation { duration: 200 } } }
+                source: cell.coverUrl; fillMode: Image.PreserveAspectCrop
+                asynchronous: true; mipmap: true
+
+                Rectangle {
+                    anchors.fill: parent
+                    color: root.showingCollectionList ? cell.consoleColor : _fallbackBg
+                    visible: cover.status !== Image.Ready
+                    Behavior on color { ColorAnimation { duration: 200 } }
+                }
 
                 Text {
                     anchors.centerIn: parent
                     width: parent.width - vpx(12)
                     visible: !root.showingCollectionList && cover.status !== Image.Ready
                     text: cell.coverLabel
-                    color: "#ffffff"
+                    color: _textPrimary
                     font.family: global.fonts.sans
                     font.pixelSize: vpx(11)
                     wrapMode: Text.WordWrap
                     horizontalAlignment: Text.AlignHCenter
                     style: Text.Outline
-                    styleColor: "#000000"
+                    styleColor: lightTheme ? "#ffffff" : "#000000"
                     z: 1
+                    Behavior on color { ColorAnimation { duration: 200 } }
                 }
             }
+
             Image {
                 id: systemLogo
                 anchors.centerIn: cover; width: cover.width * 0.65; height: cover.height * 0.65
-                source: cell.systemLogoUrl; fillMode: Image.PreserveAspectFit; asynchronous: true; mipmap: true
+                source: cell.systemLogoUrl; fillMode: Image.PreserveAspectFit
+                asynchronous: true; mipmap: true
                 visible: root.showingCollectionList; opacity: 0.6; z: 1
             }
+
             Text {
-                anchors { left: cover.left; right: cover.right; bottom: cover.bottom; leftMargin: vpx(6); rightMargin: vpx(6); bottomMargin: vpx(8) }
-                visible: root.showingCollectionList; text: cell.coverLabel; color: "#ffffff"
-                font.family: global.fonts.sans; font.pixelSize: vpx(11); wrapMode: Text.WordWrap
-                horizontalAlignment: Text.AlignHCenter; style: Text.Outline; styleColor: "#05070a"; z: 2
+                anchors {
+                    left: cover.left; right: cover.right; bottom: cover.bottom
+                    leftMargin: vpx(6); rightMargin: vpx(6); bottomMargin: vpx(8)
+                }
+                visible: root.showingCollectionList
+                text: cell.coverLabel
+                color: _textPrimary
+                font.family: global.fonts.sans; font.pixelSize: vpx(11)
+                wrapMode: Text.WordWrap; horizontalAlignment: Text.AlignHCenter
+                style: Text.Outline; styleColor: lightTheme ? "#ffffff" : "#05070a"
+                z: 2
+                Behavior on color { ColorAnimation { duration: 200 } }
             }
 
             Item {
@@ -251,9 +285,10 @@ FocusScope {
                 Rectangle {
                     id: dimmingBg
                     anchors.fill: parent
-                    color: Qt.rgba(0, 0, 0, 0.90)
+                    color: _dimOverlay
                     opacity: 0.0
                     Behavior on opacity { NumberAnimation { duration: 250 } }
+                    Behavior on color { ColorAnimation { duration: 200 } }
                 }
 
                 Column {
@@ -268,19 +303,21 @@ FocusScope {
                     Text {
                         anchors.horizontalCenter: parent.horizontalCenter
                         text: entry && entry.games ? entry.games.count : ""
-                        color: "#ffffff"
+                        color: _textPrimary
                         font.family: global.fonts.condensed
                         font.pixelSize: vpx(38)
                         font.bold: true
+                        Behavior on color { ColorAnimation { duration: 200 } }
                     }
                     Text {
                         anchors.horizontalCenter: parent.horizontalCenter
                         text: "GAMES"
-                        color: "white"
+                        color: _textPrimary
                         font.family: global.fonts.condensed
                         font.pixelSize: vpx(18)
                         font.bold: true
                         font.letterSpacing: vpx(2)
+                        Behavior on color { ColorAnimation { duration: 200 } }
                     }
                 }
 
@@ -296,7 +333,7 @@ FocusScope {
                         dimmingBg.opacity = 0.0
 
                         if (dir === "left") { fromX = vpx(-120); exitX = vpx(120) }
-                        else                { fromX =  vpx(120); exitX = vpx(-120) }
+                        else { fromX = vpx(120); exitX = vpx(-120) }
 
                         gameCountColumn.offsetX = fromX
                         dimmingBg.opacity = 0.55
@@ -304,7 +341,7 @@ FocusScope {
                     }
 
                     NumberAnimation { target: gameCountColumn; property: "offsetX"; to: 0; duration: 400; easing.type: Easing.OutCubic }
-                    PauseAnimation  { duration: 1000 }
+                    PauseAnimation { duration: 1000 }
                     NumberAnimation { target: gameCountColumn; property: "offsetX"; to: slideAnim.exitX; duration: 400; easing.type: Easing.InCubic }
 
                     onStopped: {
@@ -339,10 +376,31 @@ FocusScope {
                 visible: cell.isGame && cell.entry && cell.entry.favorite === true
 
                 Behavior on anchors.bottomMargin { NumberAnimation { duration: 150; easing.type: Easing.OutQuad } }
-                Rectangle { anchors.fill: parent; radius: width / 2; color: Qt.rgba(0,0,0,0.70) }
-                Image { id: favIconSrc; anchors.centerIn: parent; width: vpx(25); height: vpx(25); source: "assets/icons/favorite.svg"; fillMode: Image.PreserveAspectFit; mipmap: true; visible: false }
-                ColorOverlay { anchors.fill: favIconSrc; source: favIconSrc; color: "#00ff08" }
+
+                Rectangle {
+                    anchors.fill: parent
+                    radius: width / 2
+                    color: Qt.rgba(0,0,0,0.70)
+                }
+                Item {
+                    anchors.centerIn: parent
+                    width: vpx(25); height: vpx(25)
+                    Image {
+                        id: favIconSrc
+                        anchors.fill: parent
+                        source: "assets/icons/favorite.svg"
+                        fillMode: Image.PreserveAspectFit
+                        mipmap: true
+                        visible: false
+                    }
+                    ColorOverlay {
+                        anchors.fill: parent
+                        source: favIconSrc
+                        color: "#00ff08"
+                    }
+                }
             }
+
             Item {
                 id: sortBadge
                 anchors { left: cover.left; right: cover.right; bottom: cover.bottom }
@@ -351,39 +409,50 @@ FocusScope {
 
                 Rectangle {
                     anchors.fill: parent
-                    color: "#2b3034"
+                    color: _badgeBg
+                    Behavior on color { ColorAnimation { duration: 200 } }
                 }
 
                 Text {
                     id: sortBadgeLabel
                     anchors.centerIn: parent
                     text: cell.sortBadgeText
-                    color: "#ffffff"
+                    color: _badgeText
                     font.family: global.fonts.sans
                     font.pixelSize: vpx(16)
                     font.bold: true
                     font.letterSpacing: vpx(0.3)
+                    Behavior on color { ColorAnimation { duration: 200 } }
                 }
             }
+
             Rectangle {
                 id: selectionRect
                 anchors.fill: cover
                 property real borderExtra: 0
                 anchors.margins: vpx(-3.5) - borderExtra
                 border.width: vpx(1.5) + borderExtra
-                color: "transparent"; border.color: "#c7c7c7"; radius: 0; opacity: 0
+                color: "transparent"
+                border.color: _selectionBorder
+                radius: 0
+                opacity: 0
+                Behavior on border.color { ColorAnimation { duration: 200 } }
+
                 SequentialAnimation on opacity {
-                    running: cell.isCurrent && grid.activeFocus; loops: Animation.Infinite
+                    running: cell.isCurrent && grid.activeFocus
+                    loops: Animation.Infinite
                     NumberAnimation { to: 0.8; duration: 600; easing.type: Easing.InOutQuad }
                     NumberAnimation { to: 0.3; duration: 600; easing.type: Easing.InOutQuad }
                     onStopped: selectionRect.opacity = 0
                 }
                 SequentialAnimation on borderExtra {
-                    id: borderPulse; running: false
+                    id: borderPulse
+                    running: false
                     NumberAnimation { to: vpx(3.5); duration: 150; easing.type: Easing.OutQuad }
-                    NumberAnimation { to: 0;        duration: 250; easing.type: Easing.InQuad }
+                    NumberAnimation { to: 0; duration: 250; easing.type: Easing.InQuad }
                 }
             }
+
             onIsCurrentChanged: {
                 if (cell.isCurrent && grid.activeFocus) {
                     borderPulse.restart()
@@ -396,8 +465,10 @@ FocusScope {
                     }
                 }
             }
+
             scale: cell.isCurrent && grid.activeFocus ? 1.05 : 1.0
             Behavior on scale { NumberAnimation { duration: 120 } }
+
             MouseArea {
                 anchors.fill: parent
                 onClicked: {
@@ -414,12 +485,12 @@ FocusScope {
             event.accepted = true
         }
 
-        Keys.onLeftPressed:  { root.lastNavDirection = "left";  event.accepted = false }
+        Keys.onLeftPressed: { root.lastNavDirection = "left"; event.accepted = false }
         Keys.onRightPressed: { root.lastNavDirection = "right"; event.accepted = false }
 
         Keys.onPressed: {
-            if (!event.isAutoRepeat && api.keys.isAccept(event))  { event.accepted = true; if (grid.currentItem) root.activateEntry(grid.currentItem.entry); return }
-            if (api.keys.isDetails(event) && root.showingGames)   { event.accepted = true; root.toggleFavorite(); return }
+            if (!event.isAutoRepeat && api.keys.isAccept(event)) { event.accepted = true; if (grid.currentItem) root.activateEntry(grid.currentItem.entry); return }
+            if (api.keys.isDetails(event) && root.showingGames) { event.accepted = true; root.toggleFavorite(); return }
             if (api.keys.isCancel(event)) {
                 event.accepted = true
                 if (root.isCollections && root.inCollectionGames) {
@@ -444,8 +515,11 @@ FocusScope {
     Text {
         anchors.centerIn: parent
         visible: grid.count === 0 && !root.showingCollectionList
-        text: "No games here yet"; color: "#555555"
-        font.family: global.fonts.sans; font.pixelSize: vpx(18)
+        text: "No games here yet"
+        color: _emptyText
+        font.family: global.fonts.sans
+        font.pixelSize: vpx(18)
+        Behavior on color { ColorAnimation { duration: 200 } }
     }
 
     function activateEntry(entry) {
@@ -453,9 +527,9 @@ FocusScope {
             if (root.isCollections && !root.inCollectionGames) {
                 if (!entry.games || entry.games.count === 0) return
                     api.memory.set("gridIndex_collections", grid.currentIndex)
-                    root.activeCollectionName  = entry.name
+                    root.activeCollectionName = entry.name
                     root.activeCollectionGames = entry.games
-                    root.inCollectionGames     = true
+                    root.inCollectionGames = true
                     var saved = api.memory.get("gridIndex_" + entry.name)
                     grid.currentIndex = (saved !== undefined) ? saved : 0
             } else {

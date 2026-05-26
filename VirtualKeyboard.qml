@@ -1,4 +1,4 @@
-// WTF-Library Theme
+// BigScreenFE Theme
 // Copyright (C) 2026 Gonzalo
 //
 // Licensed under Creative Commons
@@ -13,22 +13,38 @@ Item {
     id: root
 
     property real bottomBarHeight: vpx(48)
+    property bool lightTheme: false
 
     signal keyTapped(string ch)
     signal backspacePressed()
     signal closeRequested()
 
+    readonly property color _kbBg: lightTheme ? "#dfe3e8" : "#0b1117"
+    readonly property color _separatorColor: lightTheme ? "#c8cdd5" : "#1e2a35"
+    readonly property color _keyBgNormal: lightTheme ? "#e9ecef" : "#111921"
+    readonly property color _keyBgSpecial: lightTheme ? "#d1d5db" : "#1a2330"
+    readonly property color _keyBgToggle: lightTheme ? "#cbd5e1" : "#0c2236"
+    readonly property color _keyBgActive: lightTheme ? "#0d1117" : "#ffffff"
+    readonly property color _keyBorderNormal: lightTheme ? "#cbd5e1" : "#1e2a35"
+    readonly property color _keyBorderToggle: lightTheme ? "#1a6b7a" : "#4a9fd4"
+    readonly property color _keyBorderActive: lightTheme ? "#0d1117" : "#ffffff"
+    readonly property color _textNormal: lightTheme ? "#0d1117" : "#c6d4df"
+    readonly property color _textActive: lightTheme ? "#ffffff" : "#020508"
+    readonly property color _textToggle: lightTheme ? "#1a6b7a" : "#4a9fd4"
+    readonly property color _iconNormal: lightTheme ? "#0d1117" : "#7a8fa3"
+    readonly property color _iconActive: lightTheme ? "#ffffff" : "#020508"
+
     readonly property real _screenH: parent ? parent.height : 720
     readonly property real _kbH: _screenH * 0.35
 
-    height:  _kbH
+    height: _kbH
     anchors {
         left: parent.left
         right: parent.right
         bottom: parent.bottom
         bottomMargin: root.bottomBarHeight
     }
-    z:    2000
+    z: 2000
     clip: true
 
     property bool isVisible: false
@@ -59,11 +75,17 @@ Item {
             Behavior on y { NumberAnimation { duration: 260; easing.type: Easing.OutCubic } }
         }
 
-        Rectangle { anchors.fill: parent; color: "#0b1117" }
+        Rectangle {
+            anchors.fill: parent
+            color: _kbBg
+            Behavior on color { ColorAnimation { duration: 300 } }
+        }
 
         Rectangle {
             anchors { top: parent.top; left: parent.left; right: parent.right }
-            height: vpx(1); color: "#1e2a35"
+            height: vpx(1)
+            color: _separatorColor
+            Behavior on color { ColorAnimation { duration: 300 } }
         }
 
         property var rows: [
@@ -131,11 +153,11 @@ Item {
         FocusScope {
             id: keyGrid
             anchors {
-                fill:         parent
-                topMargin:    vpx(5)
+                fill: parent
+                topMargin: vpx(5)
                 bottomMargin: vpx(5)
-                leftMargin:   vpx(6)
-                rightMargin:  vpx(6)
+                leftMargin: vpx(6)
+                rightMargin: vpx(6)
             }
             focus: root.isVisible
 
@@ -154,11 +176,11 @@ Item {
 
             function activateKeyData(kd) {
                 var t = kd.type
-                if      (t === "caps")  { root.capsLock  = !root.capsLock;  return }
+                if (t === "caps") { root.capsLock = !root.capsLock; return }
                 else if (t === "shift") { root.shiftMode = !root.shiftMode; return }
-                else if (t === "bs")    { root.backspacePressed();          return }
-                else if (t === "hide")  { root.closeRequested();            return }
-                else if (t === "space") { root.keyTapped(" ");              return }
+                else if (t === "bs") { root.backspacePressed(); return }
+                else if (t === "hide") { root.closeRequested(); return }
+                else if (t === "space") { root.keyTapped(" "); return }
                 var base = root.shiftMode ? kd.shiftVal : kd.val
                 root.keyTapped((kd.isLetter && root.capsLock) ? base.toUpperCase() : base)
             }
@@ -172,9 +194,9 @@ Item {
                     }
                     moveFocus(-1, 0); event.accepted = true; return
                 }
-                if (event.key === Qt.Key_Down)  { moveFocus( 1, 0); event.accepted = true; return }
-                if (event.key === Qt.Key_Left)  { moveFocus( 0,-1); event.accepted = true; return }
-                if (event.key === Qt.Key_Right) { moveFocus( 0, 1); event.accepted = true; return }
+                if (event.key === Qt.Key_Down) { moveFocus(1, 0); event.accepted = true; return }
+                if (event.key === Qt.Key_Left) { moveFocus(0, -1); event.accepted = true; return }
+                if (event.key === Qt.Key_Right) { moveFocus(0, 1); event.accepted = true; return }
 
                 if (api.keys.isAccept(event)) {
                     event.accepted = true
@@ -190,91 +212,96 @@ Item {
 
             Column {
                 anchors.fill: parent
-                spacing:      vpx(3)
+                spacing: vpx(3)
 
                 Repeater {
                     model: panel.rows.length
 
                     Item {
                         id: rowItem
-                        property int rowIdx:  index
+                        property int rowIdx: index
                         property var rowData: panel.rows[index]
-                        width:  parent.width
+                        width: parent.width
                         height: (parent.height - vpx(3) * (panel.rows.length - 1)) / panel.rows.length
 
                         property real totalWeight: {
                             var s = 0
                             for (var i = 0; i < rowData.length; i++) s += rowData[i].w
-                            return s
+                                return s
                         }
 
                         Row {
                             anchors.fill: parent
-                            spacing:      vpx(3)
+                            spacing: vpx(3)
 
                             Repeater {
                                 model: rowItem.rowData.length
 
                                 Rectangle {
                                     id: keyRect
-                                    property var  kd:      rowItem.rowData[index]
-                                    property int  colIdx:  index
-                                    property bool isActive: keyGrid.focusRow === rowItem.rowIdx &&
-                                                            keyGrid.focusCol === colIdx
+                                    property var kd: rowItem.rowData[index]
+                                    property int colIdx: index
+                                    property bool isActive: keyGrid.focusRow === rowItem.rowIdx && keyGrid.focusCol === colIdx
 
-                                    property bool isCapsOn:   kd.type === "caps"  && root.capsLock
-                                    property bool isShiftOn:  kd.type === "shift" && root.shiftMode
+                                    property bool isCapsOn: kd.type === "caps" && root.capsLock
+                                    property bool isShiftOn: kd.type === "shift" && root.shiftMode
                                     property bool isToggleOn: isCapsOn || isShiftOn
 
                                     property string displayLabel: {
                                         var t = kd.type
-                                        if (t === "caps")  return root.capsLock  ? "CAPS"  : "Caps"
-                                        if (t === "shift") return root.shiftMode ? "SHIFT" : "Shift"
-                                        if (t === "bs" || t === "hide") return kd.lbl
-                                        if (t === "space") return "SPACE"
-                                        var base = root.shiftMode ? kd.shiftLbl : kd.lbl
-                                        return (kd.isLetter && root.capsLock) ? base.toUpperCase() : base
+                                        if (t === "caps") return root.capsLock ? "CAPS" : "Caps"
+                                            if (t === "shift") return root.shiftMode ? "SHIFT" : "Shift"
+                                                if (t === "bs" || t === "hide") return kd.lbl
+                                                    if (t === "space") return "SPACE"
+                                                        var base = root.shiftMode ? kd.shiftLbl : kd.lbl
+                                                        return (kd.isLetter && root.capsLock) ? base.toUpperCase() : base
                                     }
 
                                     width: (rowItem.totalWeight > 0)
-                                           ? ((rowItem.width - vpx(3) * (rowItem.rowData.length - 1))
-                                              * kd.w / rowItem.totalWeight)
-                                           : vpx(40)
+                                    ? ((rowItem.width - vpx(3) * (rowItem.rowData.length - 1))
+                                    * kd.w / rowItem.totalWeight)
+                                    : vpx(40)
                                     height: parent.height
                                     radius: vpx(0)
 
-                                    color: isActive   ? "#ffffff"
-                                         : isToggleOn ? "#0c2236"
-                                         : (kd.type === "bs"    || kd.type === "hide" ||
-                                            kd.type === "caps"  || kd.type === "shift") ? "#1a2330"
-                                         : "#111921"
+                                    color: {
+                                        if (isActive) return _keyBgActive
+                                            if (isToggleOn) return _keyBgToggle
+                                                if (kd.type === "bs" || kd.type === "hide" ||
+                                                    kd.type === "caps" || kd.type === "shift")
+                                                    return _keyBgSpecial
+                                                    return _keyBgNormal
+                                    }
 
-                                    border.color: isActive   ? "#ffffff"
-                                                : isToggleOn ? "#4a9fd4"
-                                                :              "#1e2a35"
+                                    border.color: {
+                                        if (isActive) return _keyBorderActive
+                                            if (isToggleOn) return _keyBorderToggle
+                                                return _keyBorderNormal
+                                    }
                                     border.width: vpx(1)
 
-                                    Behavior on color        { ColorAnimation { duration: 80 } }
+                                    Behavior on color { ColorAnimation { duration: 80 } }
                                     Behavior on border.color { ColorAnimation { duration: 80 } }
 
                                     Rectangle {
                                         visible: keyRect.isToggleOn && !keyRect.isActive
                                         anchors {
-                                            top:         parent.top
-                                            right:       parent.right
-                                            topMargin:   vpx(4)
+                                            top: parent.top
+                                            right: parent.right
+                                            topMargin: vpx(4)
                                             rightMargin: vpx(4)
                                         }
-                                        width:  vpx(5)
+                                        width: vpx(5)
                                         height: vpx(5)
                                         radius: vpx(3)
-                                        color:  "#4a9fd4"
+                                        color: _keyBorderToggle
+                                        Behavior on color { ColorAnimation { duration: 80 } }
                                     }
 
                                     Item {
                                         anchors.centerIn: parent
-                                        width:   vpx(25)
-                                        height:  vpx(25)
+                                        width: vpx(25)
+                                        height: vpx(25)
                                         visible: kd.type === "bs"
 
                                         Image {
@@ -290,7 +317,7 @@ Item {
                                             anchors.fill: bsImg
                                             source: bsImg
                                             visible: bsImg.status === Image.Ready
-                                            color: keyRect.isActive ? "#020508" : "#c6d4df"
+                                            color: keyRect.isActive ? _iconActive : _iconNormal
                                             Behavior on color { ColorAnimation { duration: 80 } }
                                         }
 
@@ -298,7 +325,7 @@ Item {
                                             anchors.centerIn: parent
                                             visible: bsImg.status !== Image.Ready
                                             text: "⌫"
-                                            color: keyRect.isActive ? "#020508" : "#c6d4df"
+                                            color: keyRect.isActive ? _textActive : _textNormal
                                             font.pixelSize: vpx(16)
                                             font.family: global.fonts.sans
                                             Behavior on color { ColorAnimation { duration: 80 } }
@@ -307,8 +334,8 @@ Item {
 
                                     Item {
                                         anchors.centerIn: parent
-                                        width:   vpx(30)
-                                        height:  vpx(30)
+                                        width: vpx(30)
+                                        height: vpx(30)
                                         visible: kd.type === "hide"
 
                                         Image {
@@ -324,7 +351,7 @@ Item {
                                             anchors.fill: hideImg
                                             source: hideImg
                                             visible: hideImg.status === Image.Ready
-                                            color: keyRect.isActive ? "#020508" : "#7a8fa3"
+                                            color: keyRect.isActive ? _iconActive : _iconNormal
                                             Behavior on color { ColorAnimation { duration: 80 } }
                                         }
 
@@ -332,7 +359,7 @@ Item {
                                             anchors.centerIn: parent
                                             visible: hideImg.status !== Image.Ready
                                             text: "▼"
-                                            color: keyRect.isActive ? "#020508" : "#7a8fa3"
+                                            color: keyRect.isActive ? _textActive : _textNormal
                                             font.pixelSize: vpx(11)
                                             font.bold: true
                                             font.family: global.fonts.sans
@@ -345,15 +372,15 @@ Item {
                                         visible: kd.type !== "bs" && kd.type !== "hide"
                                         text: keyRect.displayLabel
                                         color: {
-                                            if (keyRect.isActive)   return "#020508"
-                                            if (keyRect.isToggleOn) return "#4a9fd4"
-                                            return "#c6d4df"
+                                            if (keyRect.isActive) return _textActive
+                                                if (keyRect.isToggleOn) return _textToggle
+                                                    return _textNormal
                                         }
                                         font.pixelSize: {
                                             var t = kd.type
-                                            if (t === "space")               return vpx(14)
-                                            if (t === "caps" || t === "shift") return vpx(15)
-                                            return vpx(20)
+                                            if (t === "space") return vpx(14)
+                                                if (t === "caps" || t === "shift") return vpx(15)
+                                                    return vpx(20)
                                         }
                                         font.family: global.fonts.sans
                                         font.bold: true
@@ -362,7 +389,7 @@ Item {
 
                                     MouseArea {
                                         anchors.fill: parent
-                                        cursorShape:  Qt.PointingHandCursor
+                                        cursorShape: Qt.PointingHandCursor
                                         onClicked: {
                                             keyGrid.focusRow = rowItem.rowIdx
                                             keyGrid.focusCol = colIdx

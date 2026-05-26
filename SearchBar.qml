@@ -1,4 +1,4 @@
-// WTF-Library Theme
+// BigScreenFE Theme
 // Copyright (C) 2026 Gonzalo
 //
 // Licensed under Creative Commons
@@ -31,6 +31,9 @@ Item {
     property bool solidInHub: false
     property bool hidden: false
 
+    property bool lightTheme: false
+    signal themeToggleRequested()
+
     opacity: hidden ? 0.0 : 1.0
     visible: opacity > 0.0
     Behavior on opacity { NumberAnimation { duration: 250; easing.type: Easing.InOutQuad } }
@@ -45,19 +48,22 @@ Item {
     readonly property bool raFocused: raBtn.activeFocus
     readonly property color _bgDark: "#05070a"
     readonly property color _bgLight: "#ffffff"
-    readonly property color _iconIdle: "#ffffff"
-    readonly property color _iconActive: "#c6d4df"
-    readonly property color _textColor: "#c6d4df"
-    readonly property color _placeholder: "#8b929a"
-    readonly property color _clockColor: "#ffffff"
-    readonly property color _currentIconColor: isActive ? "#000000" : _iconIdle
-    readonly property color _currentTextColor: isActive ? "#000000" : _textColor
-    readonly property color _currentPlaceholder: isActive ? "#000000" : _placeholder
+    readonly property color _iconIdle: lightTheme ? "#0d1117" : "#ffffff"
+    readonly property color _iconActive: lightTheme ? "#ffffff" : "#c6d4df"
+    readonly property color _textColor: lightTheme ? "#0d1117" : "#c6d4df"
+    readonly property color _placeholder: lightTheme ? "#5a6472" : "#8b929a"
+    readonly property color _clockColor: lightTheme ? "#0d1117" : "#ffffff"
+    readonly property color _currentIconColor: isActive ? (lightTheme ? "#ffffff" : "#000000") : _iconIdle
+    readonly property color _currentTextColor: isActive ? (lightTheme ? "#ffffff" : "#000000") : _textColor
+    readonly property color _currentPlaceholder: isActive ? (lightTheme ? "#aaaaaa" : "#000000") : _placeholder
+    readonly property color _searchBgActive: lightTheme ? "#0d1117" : "#ffffff"
+    readonly property color _barBgIdle: lightTheme ? "#dfe3e8" : "#05070a"
     property bool batteryCharging: api.device.batteryCharging
     property real batteryPercent: api.device.batteryPercent
-    property int  batteryLevel: isNaN(batteryPercent) ? -1 : Math.round(batteryPercent * 100)
+    property int batteryLevel: isNaN(batteryPercent) ? -1 : Math.round(batteryPercent * 100)
     property bool hasBattery: !isNaN(api.device.batteryPercent)
     property string _raUser: api.memory.has("ra_api_user") ? api.memory.get("ra_api_user") : ""
+    property bool themeFocused: themeToggleBtn.activeFocus
 
     Timer {
         id: batteryTimer
@@ -66,7 +72,7 @@ Item {
         repeat: true
         onTriggered: {
             root.batteryCharging = api.device.batteryCharging
-            root.batteryPercent  = api.device.batteryPercent
+            root.batteryPercent = api.device.batteryPercent
             root.batteryLevel = isNaN(root.batteryPercent) ? -1 : Math.round(root.batteryPercent * 100)
             root.hasBattery = !isNaN(api.device.batteryPercent)
         }
@@ -96,7 +102,7 @@ Item {
     Item {
         id: searchZone
         anchors { top: parent.top; bottom: parent.bottom; left: parent.left }
-        width: parent.width * 0.78
+        width: parent.width * 0.72
 
         MouseArea {
             id: searchZoneHover
@@ -111,19 +117,19 @@ Item {
             z: -1
 
             color: root.isActive
-            ? root._bgLight
-            : (searchZoneHover.containsMouse ? "#505153" : root._bgDark)
+            ? root._searchBgActive
+            : (searchZoneHover.containsMouse ? (root.lightTheme ? "#c0c5cb" : "#505153") : root._barBgIdle)
 
             opacity: root.isActive
             ? 1.0
             : (searchZoneHover.containsMouse
             ? 1.0
-            : (root.solidInHub   ? 1.0
+            : (root.solidInHub ? 1.0
             : (root.semiTransparent ? 0.75
             : (root.gameGridContentY > vpx(10) ? 0.97 : 0.0))))
 
-            Behavior on color   { ColorAnimation  { duration: 300; easing.type: Easing.InOutQuad } }
-            Behavior on opacity { NumberAnimation  { duration: 450; easing.type: Easing.InOutQuad } }
+            Behavior on color { ColorAnimation { duration: 300; easing.type: Easing.InOutQuad } }
+            Behavior on opacity { NumberAnimation { duration: 450; easing.type: Easing.InOutQuad } }
         }
 
         Item {
@@ -260,9 +266,8 @@ Item {
                         inputField.cursorPosition === inputField.text.length) {
                         event.accepted = true
                         raBtn.forceActiveFocus()
-                    }
-
-                    return
+                        }
+                        return
                 }
 
                 if (api.keys.isCancel(event)) {
@@ -331,7 +336,7 @@ Item {
 
     Rectangle {
         id: clockZone
-        color: root.isActive ? root._bgDark : "transparent"
+        color: root.isActive ? root._barBgIdle : "transparent"
 
         anchors {
             top: parent.top
@@ -344,10 +349,11 @@ Item {
             id: clockBg
             anchors.fill: parent
             z: -1
-            color: "#05070a"
-            opacity: root.solidInHub    ? 1.0
-                   : root.semiTransparent ? 0.75
-                   : (root.gameGridContentY > vpx(10) ? 0.97 : 0.0)
+            color: root._barBgIdle
+            opacity: root.solidInHub ? 1.0
+            : root.semiTransparent ? 0.75
+            : (root.gameGridContentY > vpx(10) ? 0.97 : 0.0)
+            Behavior on color { ColorAnimation { duration: 400; easing.type: Easing.InOutQuad } }
             Behavior on opacity { NumberAnimation { duration: 450; easing.type: Easing.InOutQuad } }
         }
 
@@ -380,7 +386,7 @@ Item {
 
             Item {
                 id: raUserAvatar
-                width:  vpx(26)
+                width: vpx(26)
                 height: vpx(26)
                 anchors.verticalCenter: parent.verticalCenter
                 visible: root._raUser !== ""
@@ -388,7 +394,8 @@ Item {
                 Rectangle {
                     anchors.fill: parent
                     radius: width / 2
-                    color: "#2a3447"
+                    color: root.lightTheme ? "#c0c8d8" : "#2a3447"
+                    Behavior on color { ColorAnimation { duration: 400 } }
                 }
 
                 Text {
@@ -412,8 +419,8 @@ Item {
                     id: _raAvatarImg
                     anchors.fill: parent
                     source: root._raUser !== ""
-                        ? "https://media.retroachievements.org/UserPic/" + root._raUser + ".png"
-                        : ""
+                    ? "https://media.retroachievements.org/UserPic/" + root._raUser + ".png"
+                    : ""
                     fillMode: Image.PreserveAspectCrop
                     asynchronous: true
                     mipmap: true
@@ -435,9 +442,9 @@ Item {
             }
 
             Rectangle {
-                width:   vpx(1)
-                height:  vpx(18)
-                color: "#555555"
+                width: vpx(1)
+                height: vpx(18)
+                color: root.lightTheme ? "#aab0b8" : "#555555"
                 opacity: 0.7
                 anchors.verticalCenter: parent.verticalCenter
                 visible: root._raUser !== ""
@@ -463,7 +470,7 @@ Item {
 
                 Item {
                     id: batteryIconContainer
-                    width:  vpx(26)
+                    width: vpx(26)
                     height: vpx(17)
                     anchors.verticalCenter: parent.verticalCenter
 
@@ -472,16 +479,29 @@ Item {
                         anchors.fill: parent
                         source: {
                             if (!root.hasBattery) return "assets/icons/no_battery.svg"
-                            if (root.batteryCharging) return "assets/icons/battery_charging.svg"
-                            if (root.batteryLevel <= 9) return "assets/icons/battery_0.svg"
-                            if (root.batteryLevel <= 34) return "assets/icons/battery_1.svg"
-                            if (root.batteryLevel <= 59) return "assets/icons/battery_2.svg"
-                            if (root.batteryLevel <= 84) return "assets/icons/battery_3.svg"
-                            return "assets/icons/battery_4.svg"
+                                if (root.batteryCharging) return "assets/icons/battery_charging.svg"
+                                    if (root.batteryLevel <= 9) return "assets/icons/battery_0.svg"
+                                        if (root.batteryLevel <= 34) return "assets/icons/battery_1.svg"
+                                            if (root.batteryLevel <= 59) return "assets/icons/battery_2.svg"
+                                                if (root.batteryLevel <= 84) return "assets/icons/battery_3.svg"
+                                                    return "assets/icons/battery_4.svg"
                         }
                         fillMode: Image.PreserveAspectFit
-                        mipmap:true
-                        visible: true
+                        mipmap: true
+                        visible: false
+                    }
+
+                    ColorOverlay {
+                        anchors.fill: batteryIcon
+                        source: batteryIcon
+                        color: {
+                            if (!root.hasBattery) return root._clockColor
+                                if (root.batteryCharging) return "#4CAF50"
+                                    if (root.batteryLevel <= 15) return "#F44336"
+                                        if (root.batteryLevel <= 30) return "#FF9800"
+                                            return root._clockColor
+                        }
+                        Behavior on color { ColorAnimation { duration: 300; easing.type: Easing.InOutQuad } }
                     }
                 }
 
@@ -490,28 +510,119 @@ Item {
                     anchors.verticalCenter: parent.verticalCenter
                     text: {
                         if (!root.hasBattery) return "AC"
-                        if (root.batteryCharging) return "⚡" + root.batteryLevel + "%"
-                        return root.batteryLevel + "%"
+                            if (root.batteryCharging) return "⚡" + root.batteryLevel + "%"
+                                return root.batteryLevel + "%"
                     }
                     color: {
-                        if (!root.hasBattery) return Qt.rgba(1, 1, 1, 0.55)
-                        if (root.batteryCharging) return "#4CAF50"
-                        if (root.batteryLevel <= 15) return "#F44336"
-                        if (root.batteryLevel <= 30) return "#FF9800"
-                        return root._clockColor
+                        if (!root.hasBattery) return root.lightTheme ? Qt.rgba(0, 0, 0, 0.85) : Qt.rgba(1, 1, 1, 0.55)
+                            if (root.batteryCharging) return "#4CAF50"
+                                if (root.batteryLevel <= 15) return "#F44336"
+                                    if (root.batteryLevel <= 30) return "#FF9800"
+                                        return root._clockColor
                     }
                     Behavior on color { ColorAnimation { duration: 300; easing.type: Easing.InOutQuad } }
                     font.pixelSize: vpx(14)
-                    font.family:    global.fonts.sans
+                    font.family: global.fonts.sans
+                    font.bold: true
                 }
             }
 
             Rectangle {
-                width:   vpx(1)
-                height:  vpx(18)
-                color: "#555555"
+                width: vpx(1)
+                height: vpx(18)
+                color: root.lightTheme ? "#aab0b8" : "#555555"
                 opacity: 0.7
                 anchors.verticalCenter: parent.verticalCenter
+            }
+
+            Item {
+                id: themeToggleBtn
+                width: vpx(26)
+                height: vpx(26)
+                anchors.verticalCenter: parent.verticalCenter
+                activeFocusOnTab: true
+
+                Rectangle {
+                    anchors {
+                        fill: parent
+                        margins: vpx(-5)
+                    }
+                    radius: vpx(5)
+                    color: themeToggleBtn.activeFocus ? "#f5a623" : "transparent"
+                    opacity: themeToggleBtn.activeFocus ? 0.18 : 0.0
+                    Behavior on opacity { NumberAnimation { duration: 150 } }
+                }
+
+                Rectangle {
+                    anchors {
+                        fill: parent
+                        margins: vpx(-5)
+                    }
+                    radius: vpx(5)
+                    color: themeBtnMouse.containsMouse ? (root.lightTheme ? "#0d1117" : "#ffffff") : "transparent"
+                    opacity: themeBtnMouse.containsMouse ? 0.12 : 0.0
+                    Behavior on opacity { NumberAnimation { duration: 150 } }
+                }
+
+                Image {
+                    id: _themeIcon
+                    anchors.fill: parent
+                    source: root.lightTheme ? "assets/icons/dark.svg" : "assets/icons/light.svg"
+                    fillMode: Image.PreserveAspectFit
+                    mipmap: true
+                    visible: false
+                }
+                ColorOverlay {
+                    anchors.fill: _themeIcon
+                    source: _themeIcon
+                    color: root._clockColor
+                    visible: _themeIcon.status === Image.Ready
+                    Behavior on color { ColorAnimation { duration: 600; easing.type: Easing.InOutQuad } }
+                }
+                Text {
+                    anchors.centerIn: parent
+                    visible: _themeIcon.status !== Image.Ready
+                    text: root.lightTheme ? "\u263d" : "\u2600"
+                    font.pixelSize: vpx(14)
+                    font.family: global.fonts.sans
+                    color: root._clockColor
+                    Behavior on color { ColorAnimation { duration: 400 } }
+                }
+
+                Keys.onLeftPressed: {
+                    event.accepted = true;
+                    raBtn.forceActiveFocus();
+                }
+                Keys.onRightPressed: {
+                    event.accepted = true;
+                }
+                Keys.onDownPressed: {
+                    event.accepted = true;
+                    root.focusDownRequested();
+                }
+                Keys.onPressed: {
+                    if (!event.isAutoRepeat && api.keys.isAccept(event)) {
+                        event.accepted = true;
+                        root.themeToggleRequested();
+                    }
+                }
+
+                MouseArea {
+                    id: themeBtnMouse
+                    anchors.fill: parent
+                    cursorShape: Qt.PointingHandCursor
+                    hoverEnabled: true
+                    onClicked: root.themeToggleRequested()
+                }
+            }
+
+            Rectangle {
+                width: vpx(1)
+                height: vpx(18)
+                color: root.lightTheme ? "#aab0b8" : "#555555"
+                opacity: 0.7
+                anchors.verticalCenter: parent.verticalCenter
+                Behavior on color { ColorAnimation { duration: 400 } }
             }
 
             Item {
@@ -519,6 +630,7 @@ Item {
                 width: vpx(26)
                 height: vpx(26)
                 anchors.verticalCenter: parent.verticalCenter
+                activeFocusOnTab: true
 
                 Rectangle {
                     anchors {
@@ -543,7 +655,7 @@ Item {
                 ColorOverlay {
                     anchors.fill: _raIcon
                     source: _raIcon
-                    color: raBtn.activeFocus ? "#f5a623" : "#ffffff"
+                    color: raBtn.activeFocus ? "#f5a623" : root._clockColor
                     visible: _raIcon.status === Image.Ready
                     Behavior on color { ColorAnimation { duration: 200; easing.type: Easing.InOutQuad } }
                 }
@@ -555,45 +667,46 @@ Item {
                     font.pixelSize: vpx(11)
                     font.bold: true
                     font.family: global.fonts.sans
-                    color: raBtn.activeFocus ? "#f5a623" : "#ffffff"
+                    color: raBtn.activeFocus ? "#f5a623" : root._clockColor
                     Behavior on color { ColorAnimation { duration: 200 } }
                 }
 
                 Keys.onLeftPressed: {
-                    event.accepted = true
-                    inputField.forceActiveFocus()
-                    inputField.cursorPosition = inputField.text.length
+                    event.accepted = true;
+                    inputField.forceActiveFocus();
+                    inputField.cursorPosition = inputField.text.length;
                 }
-
+                Keys.onRightPressed: {
+                    event.accepted = true;
+                    themeToggleBtn.forceActiveFocus();
+                }
                 Keys.onDownPressed: {
-                    event.accepted = true
-                    root.focusDownRequested()
+                    event.accepted = true;
+                    root.focusDownRequested();
                 }
-
                 Keys.onPressed: {
                     if (api.keys.isCancel(event)) {
-                        event.accepted = true
-                        inputField.forceActiveFocus()
-                        inputField.cursorPosition = inputField.text.length
-                        return
+                        event.accepted = true;
+                        inputField.forceActiveFocus();
+                        inputField.cursorPosition = inputField.text.length;
+                        return;
                     }
-
                     if (!event.isAutoRepeat && api.keys.isAccept(event)) {
-                        event.accepted = true
-                        credentialsPopup.open()
-                        return
+                        event.accepted = true;
+                        credentialsPopup.open();
+                        return;
                     }
                 }
 
                 MouseArea {
                     anchors.fill: parent
-                    cursorShape:  Qt.PointingHandCursor
+                    cursorShape: Qt.PointingHandCursor
                     hoverEnabled: true
                     onClicked: {
                         if (credentialsPopup.isOpen)
-                            credentialsPopup.close()
+                            credentialsPopup.close();
                         else
-                            credentialsPopup.open()
+                            credentialsPopup.open();
                     }
                 }
             }
@@ -602,11 +715,11 @@ Item {
 
     Rectangle {
         anchors { bottom: parent.bottom; left: parent.left }
-        width: parent.width * 0.80
+        width: parent.width * 0.72
         height: vpx(1)
-        color: root.isActive ? Qt.rgba(0, 0, 0, 0.12) : "transparent"
+        color: root.isActive ? (root.lightTheme ? Qt.rgba(1,1,1,0.18) : Qt.rgba(0,0,0,0.12)) : "transparent"
         opacity: root.isActive ? 1.0 : (root.gameGridContentY > vpx(10) ? 0.97 : 0.0)
-        Behavior on color   { ColorAnimation  { duration: 300 } }
+        Behavior on color { ColorAnimation { duration: 300 } }
         Behavior on opacity { NumberAnimation { duration: 450; easing.type: Easing.InOutQuad } }
     }
 
@@ -618,11 +731,13 @@ Item {
             horizontalCenter: parent.horizontalCenter
         }
 
-        width:  parent.width
+        width: parent.width
         height: vpx(260)
 
+        lightTheme: root.lightTheme
+
         onUserInputActivated: {
-            root._raVkbMode     = true
+            root._raVkbMode = true
             root._raActiveField = "user"
             if (!root._raVkbSuppressReopen) {
                 root.keyboardOpen = true
@@ -631,7 +746,7 @@ Item {
         }
 
         onKeyInputActivated: {
-            root._raVkbMode     = true
+            root._raVkbMode = true
             root._raActiveField = "key"
             if (!root._raVkbSuppressReopen) {
                 root.keyboardOpen = true
@@ -640,7 +755,7 @@ Item {
         }
 
         onCredentialsSaved: {
-            root._raVkbMode          = false
+            root._raVkbMode = false
             root._raVkbSuppressReopen = false
             _raVkbSuppressTimer.stop()
             root.keyboardOpen = false
@@ -650,7 +765,7 @@ Item {
         }
 
         onPopupClosed: {
-            root._raVkbMode          = false
+            root._raVkbMode = false
             root._raVkbSuppressReopen = false
             _raVkbSuppressTimer.stop()
             root.keyboardOpen = false
@@ -664,13 +779,14 @@ Item {
         parent: root.parent ? root.parent : root
         anchors { left: parent.left; right: parent.right; bottom: parent.bottom }
         bottomBarHeight: vpx(48)
+        lightTheme: root.lightTheme
 
         onKeyTapped: function(ch) {
             if (root._raVkbMode) {
                 if (root._raActiveField === "user") credentialsPopup.appendToUser(ch)
-                else                                credentialsPopup.appendToKey(ch)
-                _vkbRefocusTimer.start()
-                return
+                    else credentialsPopup.appendToKey(ch)
+                        _vkbRefocusTimer.start()
+                        return
             }
             root._vkbTyping = true
             inputField.text = inputField.text + ch
@@ -683,17 +799,17 @@ Item {
         onBackspacePressed: {
             if (root._raVkbMode) {
                 if (root._raActiveField === "user") credentialsPopup.backspaceUser()
-                else                                credentialsPopup.backspaceKey()
-                _vkbRefocusTimer.start()
-                return
+                    else credentialsPopup.backspaceKey()
+                        _vkbRefocusTimer.start()
+                        return
             }
             root._vkbTyping = true
             if (inputField.text.length > 0)
                 inputField.text = inputField.text.slice(0, -1)
-            root._vkbTyping = false
-            debounceTimer.stop()
-            vkbDebounceTimer.restart()
-            _vkbRefocusTimer.start()
+                root._vkbTyping = false
+                debounceTimer.stop()
+                vkbDebounceTimer.restart()
+                _vkbRefocusTimer.start()
         }
 
         onCloseRequested: {
@@ -748,7 +864,7 @@ Item {
         debounceTimer.stop();
         vkbDebounceTimer.stop();
         inputField.text = "";
-        committedQuery  = "";
+        committedQuery = "";
     }
 
     function backspaceOne() {

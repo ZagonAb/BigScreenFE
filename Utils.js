@@ -1,4 +1,4 @@
-// WTF-Library Theme
+// BigScreenFE Theme
 // Copyright (C) 2026 Gonzalo
 //
 // Licensed under Creative Commons
@@ -41,55 +41,55 @@ function normalizeForSearch(text) {
     if (!text) return "";
     return text.toLowerCase()
     .replace(/[áàäâã]/g, "a")
-    .replace(/[éèëê]/g,  "e")
-    .replace(/[íìïî]/g,  "i")
+    .replace(/[éèëê]/g, "e")
+    .replace(/[íìïî]/g, "i")
     .replace(/[óòöôõ]/g, "o")
-    .replace(/[úùüû]/g,  "u")
-    .replace(/[ñ]/g,     "n")
-    .replace(/[ç]/g,     "c")
+    .replace(/[úùüû]/g, "u")
+    .replace(/[ñ]/g, "n")
+    .replace(/[ç]/g, "c")
     .trim();
 }
 
 function formatLastPlayed(date) {
     if (!date || isNaN(date.getTime())) return "";
-    var now      = new Date();
-    var diffMs   = now - date;
+    var now = new Date();
+    var diffMs = now - date;
     var diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
-    if (diffDays === 0)        return "TODAY";
-    if (diffDays === 1)        return "YESTERDAY";
-    if (diffDays <= 7)         return "LAST WEEK";
-    if (diffDays <= 14)        return "LAST TWO WEEKS";
-    if (diffDays <= 30)        return "LAST MONTH";
-    if (diffDays <= 365)       return "LAST " + Math.floor(diffDays / 30) + " MONTHS";
+    if (diffDays === 0) return "TODAY";
+    if (diffDays === 1) return "YESTERDAY";
+    if (diffDays <= 7) return "LAST WEEK";
+    if (diffDays <= 14) return "LAST TWO WEEKS";
+    if (diffDays <= 30) return "LAST MONTH";
+    if (diffDays <= 365) return "LAST " + Math.floor(diffDays / 30) + " MONTHS";
     return "OVER A YEAR AGO";
 }
 
 var _genericHeaders = [
     "introduccion", "introducción",
-    "descripcion", "descripción",
-    "caracteristicas", "características",
-    "caracteristicas principales", "características principales",
-    "acerca de este juego", "acerca del juego",
-    "sobre el juego", "sobre este juego",
-    "introduction", "description", "overview",
-    "about this game", "about the game",
-    "features", "main features", "key features",
-    "synopsis", "sinopsis", "summary"
+"descripcion", "descripción",
+"caracteristicas", "características",
+"caracteristicas principales", "características principales",
+"acerca de este juego", "acerca del juego",
+"sobre el juego", "sobre este juego",
+"introduction", "description", "overview",
+"about this game", "about the game",
+"features", "main features", "key features",
+"synopsis", "sinopsis", "summary"
 ];
 
 function _stripHtml(text) {
     var s = text;
     s = s.replace(/<video[\s\S]*?<\/video>/gi, " ");
-    s = s.replace(/<span[\s\S]*?<\/span>/gi,   " ");
-    s = s.replace(/<br\s*\/?>/gi,               " ");
-    s = s.replace(/<[^>]+>/g,                   " ");
-    s = s.replace(/&amp;/g,  "&");
-    s = s.replace(/&lt;/g,   "<");
-    s = s.replace(/&gt;/g,   ">");
+    s = s.replace(/<span[\s\S]*?<\/span>/gi, " ");
+    s = s.replace(/<br\s*\/?>/gi, " ");
+    s = s.replace(/<[^>]+>/g, " ");
+    s = s.replace(/&amp;/g, "&");
+    s = s.replace(/&lt;/g, "<");
+    s = s.replace(/&gt;/g, ">");
     s = s.replace(/&nbsp;/g, " ");
     s = s.replace(/&quot;/g, "\"");
-    s = s.replace(/&#39;/g,  "'");
+    s = s.replace(/&#39;/g, "'");
     s = s.replace(/\r\n|\r|\n/g, " ");
     s = s.replace(/\s{2,}/g, " ");
     return s.trim();
@@ -123,7 +123,7 @@ function truncateDescription(text) {
         }
     }
 
-    var result   = "";
+    var result = "";
     var dotCount = 0;
     var i = 0;
     while (i < flat.length && dotCount < 2) {
@@ -148,10 +148,10 @@ function truncateDescription(text) {
 function gameMatchesSearch(game, query) {
     if (!query || query.length === 0) return true;
     var fields = [
-        game.title     || "",
+        game.title || "",
         game.developer || "",
         game.publisher || "",
-        game.genre     || ""
+        game.genre || ""
     ];
     for (var i = 0; i < fields.length; i++) {
         if (normalizeForSearch(fields[i]).indexOf(query) !== -1)
@@ -159,7 +159,6 @@ function gameMatchesSearch(game, query) {
     }
     return false;
 }
-
 
 function getUniqueGenresFromGames(maxGenres) {
     var uniqueGenres = new Set();

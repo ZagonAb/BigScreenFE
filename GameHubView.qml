@@ -1,4 +1,4 @@
-// WTF-Library Theme
+// BigScreenFE Theme
 // Copyright (C) 2026 Gonzalo
 //
 // Licensed under Creative Commons
@@ -14,17 +14,37 @@ FocusScope {
     id: root
 
     property var game: null
+    property bool lightTheme: false
 
     signal closeRequested()
     signal playRequested()
     signal focusSearchRequested()
+
+    readonly property color _hubBg: lightTheme ? "#dfe3e8" : "#1c222b"
+    readonly property color _cardBg: lightTheme ? "#ffffff" : "#2a3447"
+    readonly property color _textPrimary: lightTheme ? "#0d1117" : "#ffffff"
+    readonly property color _textSecondary: lightTheme ? "#5a6472" : "#a0aab5"
+    readonly property color _textMuted: lightTheme ? "#8b929a" : "#607d8b"
+    readonly property color _accent: lightTheme ? "#1a6b7a" : "#3db54a"
+    readonly property color _buttonBg: lightTheme ? "#cfd4d9" : "#43525e"
+    readonly property color _buttonHover: lightTheme ? "#b0b5ba" : "#55585f"
+    readonly property color _separator: lightTheme ? "#c8cdd3" : "#253040"
+    readonly property color _tabActiveBg: lightTheme ? "#0d1117" : "#ffffff"
+    readonly property color _tabActiveText: lightTheme ? "#ffffff" : "#0d1117"
+    readonly property color _tabInactiveText: lightTheme ? "#0d1117" : "#ffffff"
+    readonly property color _tabInactiveBg: "transparent"
+    readonly property color _tabFocusedBg: lightTheme ? "#0d1117" : "#ffffff"
+    readonly property color _tabFocusedText: lightTheme ? "#ffffff" : "#0d1117"
+    readonly property color _ratingLow: "#c0392b"
+    readonly property color _ratingMed: "#e0a020"
+    readonly property color _ratingHigh: "#3db54a"
 
     function smartBack() {
         if (_mediaViewLoader.active) {
             _mediaViewLoader.active = false
             var secMV = root._activeSlot === 0 ? _loaderA.item : _loaderB.item
             if (secMV && secMV.hasGrid) secMV.gridFocusAtZero()
-            return
+                return
         }
         if (_tabList.activeFocus) {
             _flick.contentY = 0;
@@ -39,7 +59,7 @@ FocusScope {
 
     property real searchBarHeight: 0
     readonly property bool playHasFocus: _playBtn.activeFocus
-    readonly property bool tabHasFocus:  _tabList.activeFocus
+    readonly property bool tabHasFocus: _tabList.activeFocus
     readonly property bool gridHasFocus: {
         if (_activeTab === 0) return false;
         var sec = _activeSlot === 0 ? _loaderA.item : _loaderB.item;
@@ -47,7 +67,7 @@ FocusScope {
     }
 
     readonly property bool raGridHasFocus: gridHasFocus && (_activeTab === _raTabIndex)
-    readonly property bool mediaViewOpen:  _mediaViewLoader.active
+    readonly property bool mediaViewOpen: _mediaViewLoader.active
 
     readonly property var currentGridGame: {
         if (_activeTab === 0) return null;
@@ -65,7 +85,7 @@ FocusScope {
         return game.assets.logo || "";
     }
 
-    readonly property string _lastPlayed: game ? Utils.formatDate(game.lastPlayed)   : ""
+    readonly property string _lastPlayed: game ? Utils.formatDate(game.lastPlayed) : ""
     readonly property bool _hasLastPlayed: _lastPlayed !== ""
     readonly property string _playTime: game ? Utils.formatPlayTime(game.playTime) : ""
     readonly property bool _hasPlayTime: game && game.playTime > 0
@@ -85,17 +105,21 @@ FocusScope {
         var t = ["GAME INFO"];
         t.push("MEDIA");
         if (_publisherName !== "") t.push("MORE BY " + _publisherName.toUpperCase());
-        if (_genreName     !== "") t.push("MORE " + _genreName.toUpperCase());
+        if (_genreName !== "") t.push("MORE " + _genreName.toUpperCase());
         t.push("YOUR STUFF");
         return t;
     }
 
-    readonly property int _raTabIndex:    _tabs.length - 1
+    readonly property int _raTabIndex: _tabs.length - 1
     readonly property int _mediaTabIndex: 1
 
     property int _activeTab: 0
 
-    Rectangle { anchors.fill: parent; color: "#1c222b" }
+    Rectangle {
+        anchors.fill: parent
+        color: _hubBg
+        Behavior on color { ColorAnimation { duration: 400; easing.type: Easing.InOutQuad } }
+    }
 
     Flickable {
         id: _flick
@@ -117,13 +141,13 @@ FocusScope {
 
             Item {
                 id: _heroZone
-                width:  parent.width
+                width: parent.width
                 height: Math.max(vpx(120), root.height * 0.45) + root.searchBarHeight
 
                 Image {
                     id: _heroImg
                     width: parent.width
-                    height:parent.height * 1.3
+                    height: parent.height * 1.3
                     source: root._bgSrc
                     fillMode: Image.PreserveAspectCrop
                     verticalAlignment: Image.AlignVCenter
@@ -136,7 +160,7 @@ FocusScope {
                     height: vpx(80)
                     gradient: Gradient {
                         GradientStop { position: 0.0; color: "transparent" }
-                        GradientStop { position: 1.0; color: "#1c222b" }
+                        GradientStop { position: 1.0; color: root._hubBg }
                     }
                 }
 
@@ -168,7 +192,7 @@ FocusScope {
                         width: parent.width
                         visible: !_logoImg.visible
                         text: root.game ? root.game.title : ""
-                        color: "#ffffff"
+                        color: root._textPrimary
                         font.family: global.fonts.sans
                         font.pixelSize: vpx(38)
                         font.bold: true
@@ -176,16 +200,17 @@ FocusScope {
                         maximumLineCount: 2
                         elide: Text.ElideRight
                         style: Text.Outline
-                        styleColor: "#000000"
+                        styleColor: root.lightTheme ? "#ffffff" : "#000000"
+                        Behavior on color { ColorAnimation { duration: 400 } }
                     }
                 }
             }
 
             Rectangle {
-                width:  parent.width
-                height: _actionBar.height + _sepTop.height + _tabBarItem.height
-                        + _sepBottom.height + _sectionItem.height
-                color: "#1c222b"
+                width: parent.width
+                height: _actionBar.height + _sepTop.height + _tabBarItem.height + _sepBottom.height + _sectionItem.height
+                color: _hubBg
+                Behavior on color { ColorAnimation { duration: 400 } }
 
                 Column {
                     width: parent.width
@@ -193,7 +218,7 @@ FocusScope {
 
                     Item {
                         id: _actionBar
-                        width:  parent.width
+                        width: parent.width
                         height: vpx(72)
 
                         Item {
@@ -212,7 +237,7 @@ FocusScope {
                             Rectangle {
                                 anchors.fill: parent
                                 radius: vpx(4)
-                                color: _playBtn._focused ? "#3db54a" : "#43525e"
+                                color: _playBtn._focused ? root._accent : root._buttonBg
                                 Behavior on color { ColorAnimation { duration: 180 } }
                             }
 
@@ -308,18 +333,20 @@ FocusScope {
 
                             Text {
                                 text: "LAST PLAYED"
-                                color: "#607d8b"
+                                color: root._textMuted
                                 font.family: global.fonts.sans
                                 font.pixelSize: vpx(10)
                                 font.bold: true
                                 font.letterSpacing: vpx(0.8)
+                                Behavior on color { ColorAnimation { duration: 200 } }
                             }
                             Text {
                                 text: root._lastPlayed
-                                color: "#e0e8ee"
+                                color: root._textPrimary
                                 font.family: global.fonts.sans
                                 font.pixelSize: vpx(15)
                                 font.bold: true
+                                Behavior on color { ColorAnimation { duration: 200 } }
                             }
                         }
 
@@ -335,25 +362,27 @@ FocusScope {
 
                             Text {
                                 text: "PLAY TIME"
-                                color: "#607d8b"
+                                color: root._textMuted
                                 font.family: global.fonts.sans
                                 font.pixelSize: vpx(10)
                                 font.bold: true
                                 font.letterSpacing: vpx(0.8)
+                                Behavior on color { ColorAnimation { duration: 200 } }
                             }
                             Text {
                                 text: root._playTime
-                                color: "#e0e8ee"
+                                color: root._textPrimary
                                 font.family: global.fonts.sans
                                 font.pixelSize: vpx(15)
                                 font.bold: true
+                                Behavior on color { ColorAnimation { duration: 200 } }
                             }
                         }
 
                         Column {
                             anchors {
                                 left: {
-                                    if (root._hasPlayTime)   return _playTimeCol.right;
+                                    if (root._hasPlayTime) return _playTimeCol.right;
                                     if (root._hasLastPlayed) return _lastPlayedCol.right;
                                     return _playBtn.right;
                                 }
@@ -365,11 +394,12 @@ FocusScope {
 
                             Text {
                                 text: "RATING"
-                                color: "#607d8b"
+                                color: root._textMuted
                                 font.family: global.fonts.sans
                                 font.pixelSize: vpx(10)
                                 font.bold: true
                                 font.letterSpacing: vpx(0.8)
+                                Behavior on color { ColorAnimation { duration: 200 } }
                             }
 
                             Row {
@@ -377,11 +407,12 @@ FocusScope {
 
                                 Text {
                                     text: root._ratingInt + " / 100"
-                                    color: "#e0e8ee"
+                                    color: root._textPrimary
                                     font.family: global.fonts.sans
                                     font.pixelSize: vpx(15)
                                     font.bold: true
                                     anchors.verticalCenter: parent.verticalCenter
+                                    Behavior on color { ColorAnimation { duration: 200 } }
                                 }
 
                                 Item {
@@ -392,7 +423,8 @@ FocusScope {
                                     Rectangle {
                                         anchors.fill: parent
                                         radius: vpx(2)
-                                        color: "#2a3a48"
+                                        color: root._separator
+                                        Behavior on color { ColorAnimation { duration: 200 } }
                                     }
                                     Rectangle {
                                         width: parent.width * (root.game ? root.game.rating : 0)
@@ -400,9 +432,9 @@ FocusScope {
                                         radius: vpx(2)
                                         color: {
                                             var r = root.game ? root.game.rating : 0;
-                                            if (r >= 0.75) return "#3db54a";
-                                            if (r >= 0.5)  return "#e0a020";
-                                            return "#c0392b";
+                                            if (r >= 0.75) return root._ratingHigh;
+                                            if (r >= 0.5) return root._ratingMed;
+                                            return root._ratingLow;
                                         }
                                         Behavior on width { NumberAnimation { duration: 500; easing.type: Easing.OutQuad } }
                                     }
@@ -413,10 +445,11 @@ FocusScope {
 
                     Rectangle {
                         id: _sepTop
-                        width:  parent.width - vpx(96)
+                        width: parent.width - vpx(96)
                         x: vpx(48)
                         height: vpx(1)
-                        color: "#253040"
+                        color: root._separator
+                        Behavior on color { ColorAnimation { duration: 200 } }
                     }
 
                     Item {
@@ -500,10 +533,9 @@ FocusScope {
                                     anchors.fill: parent
                                     radius: vpx(18)
                                     color: {
-                                        if (_focused)                                          return "#ffffff";
-                                        if ((_playMode || root.gridHasFocus) && _active)      return "#55585f";
-                                        if (_tabHover.containsMouse && !_active)               return "#55585f";
-                                        return "transparent";
+                                        if (_focused) return root._tabFocusedBg
+                                            if (_active) return root.lightTheme ? Qt.rgba(0,0,0,0.08) : Qt.rgba(1,1,1,0.12)
+                                                return "transparent"
                                     }
                                     Behavior on color { ColorAnimation { duration: 180 } }
                                 }
@@ -513,8 +545,9 @@ FocusScope {
                                     anchors.centerIn: parent
                                     text: modelData
                                     color: {
-                                        if (_focused)  return _isRA ? "#0b1117" : "#0b1117";
-                                        return "#ffffff";
+                                        if (_focused) return root._tabFocusedText
+                                            if (_active) return root._textPrimary
+                                                return root._textSecondary
                                     }
                                     font.family: global.fonts.sans
                                     font.pixelSize: vpx(13)
@@ -546,7 +579,8 @@ FocusScope {
                         width: parent.width - vpx(96)
                         x: vpx(48)
                         height: vpx(1)
-                        color: "#1e2d38"
+                        color: root._separator
+                        Behavior on color { ColorAnimation { duration: 200 } }
                     }
 
                     Item {
@@ -554,8 +588,7 @@ FocusScope {
                         width: parent.width
                         height: {
                             var sec = _activeSlot === 0 ? _loaderA.item : _loaderB.item;
-                            if (sec && (root._activeTab === root._raTabIndex
-                                     || root._activeTab === root._mediaTabIndex))
+                            if (sec && (root._activeTab === root._raTabIndex || root._activeTab === root._mediaTabIndex))
                                 return Math.max(vpx(420), sec.implicitHeight + vpx(48));
                             return vpx(420);
                         }
@@ -586,19 +619,17 @@ FocusScope {
                             onItemChanged: root._connectSection(item)
                         }
                     }
-
                 }
             }
         }
     }
-
-
 
     Component {
         id: _gameInfoComp
         GameInfoSection {
             width: parent ? parent.width : 0
             game: root.game
+            lightTheme: root.lightTheme
         }
     }
 
@@ -607,6 +638,7 @@ FocusScope {
         MoreByPublisherSection {
             width: parent ? parent.width : 0
             game: root.game
+            lightTheme: root.lightTheme
         }
     }
 
@@ -615,6 +647,7 @@ FocusScope {
         MoreByGenreSection {
             width: parent ? parent.width : 0
             game: root.game
+            lightTheme: root.lightTheme
         }
     }
 
@@ -623,6 +656,7 @@ FocusScope {
         RAGameInfoSection {
             width: parent ? parent.width : 0
             game: root.game
+            lightTheme: root.lightTheme
         }
     }
 
@@ -631,13 +665,14 @@ FocusScope {
         GameMediaSection {
             width: parent ? parent.width : 0
             game: root.game
+            lightTheme: root.lightTheme
         }
     }
 
-    property int  _activeSlot: 0
-    property int  _slot0Tab:   0
-    property int  _slot1Tab:  -1
-    property var  _gameStack: []
+    property int _activeSlot: 0
+    property int _slot0Tab: 0
+    property int _slot1Tab: -1
+    property var _gameStack: []
     property bool _isNavigating: false
 
     function _navigateToGame(newGame) {
@@ -656,7 +691,7 @@ FocusScope {
         if (_gameStack.length > 0) {
             _isNavigating = true;
             var stack = _gameStack.slice();
-            var prev  = stack.pop();
+            var prev = stack.pop();
             _gameStack = stack;
             game = prev;
             _isNavigating = false;
@@ -669,7 +704,7 @@ FocusScope {
     }
 
     function _compForTab(tab) {
-        if (tab === root._raTabIndex)    return _raInfoComp;
+        if (tab === root._raTabIndex) return _raInfoComp;
         if (tab === root._mediaTabIndex) return _mediaComp;
 
         switch (tab) {
@@ -699,9 +734,9 @@ FocusScope {
         }
         if (item && typeof item.mediaViewRequested !== "undefined") {
             item.mediaViewRequested.connect(function(mediaList, startIndex) {
-                _mediaViewLoader.mediaList  = mediaList;
+                _mediaViewLoader.mediaList = mediaList;
                 _mediaViewLoader.startIndex = startIndex;
-                _mediaViewLoader.active     = true;
+                _mediaViewLoader.active = true;
                 _focusMediaViewTimer.start();
             });
         }
@@ -737,23 +772,24 @@ FocusScope {
     Loader {
         id: _mediaViewLoader
         anchors {
-            top:    parent.top
+            top: parent.top
             bottom: parent.bottom
-            left:   parent.left
-            right:  parent.right
+            left: parent.left
+            right: parent.right
             topMargin: -root.searchBarHeight
         }
         z: 900
         active: false
         visible: active
 
-        property var mediaList:  []
+        property var mediaList: []
         property int startIndex: 0
 
         sourceComponent: Component {
             GameMediaView {
-                mediaList:  _mediaViewLoader.mediaList
+                mediaList: _mediaViewLoader.mediaList
                 startIndex: _mediaViewLoader.startIndex
+                lightTheme: root.lightTheme
                 onCloseRequested: {
                     _mediaViewLoader.active = false
                     var sec = root._activeSlot === 0 ? _loaderA.item : _loaderB.item

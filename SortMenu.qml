@@ -1,4 +1,4 @@
-// WTF-Library Theme
+// BigScreenFE Theme
 // Copyright (C) 2026 Gonzalo
 //
 // Licensed under Creative Commons
@@ -14,10 +14,20 @@ FocusScope {
     anchors.fill: parent
     visible: false
 
+    property string activeSortId: "alpha_asc"
+    property bool lightTheme: false
+
     signal sortSelected(string sortId)
     signal menuClosed()
 
-    property string activeSortId: "alpha_asc"
+    readonly property color _overlayBg: lightTheme ? Qt.rgba(0,0,0,0.30) : "#000000"
+    readonly property color _panelBg: lightTheme ? "#f8f9fa" : "#23262e"
+    readonly property color _separator: lightTheme ? "#cbd5e1" : "#05070a"
+    readonly property color _itemBgCurrent: lightTheme ? "#0d1117" : "#ffffff"
+    readonly property color _itemBgHover: lightTheme ? "#e2e8f0" : "#3d4450"
+    readonly property color _itemBgNormal: "transparent"
+    readonly property color _textCurrent: lightTheme ? "#ffffff" : "#23262e"
+    readonly property color _textNormal: lightTheme ? "#0d1117" : "#c6d4df"
 
     function open() {
         for (var i = 0; i < sortItems.count; i++) {
@@ -51,8 +61,9 @@ FocusScope {
 
     Rectangle {
         anchors.fill: parent
-        color: "#000000"
+        color: _overlayBg
         opacity: 0.55
+        Behavior on color { ColorAnimation { duration: 200 } }
 
         MouseArea {
             anchors.fill: parent
@@ -64,10 +75,11 @@ FocusScope {
         id: panel
 
         anchors.centerIn: parent
-        width:  vpx(320)
+        width: vpx(320)
         height: menuList.contentHeight
-        color:  "#23262e"
+        color: _panelBg
         opacity: 0
+        Behavior on color { ColorAnimation { duration: 200 } }
 
         ListView {
             id: menuList
@@ -80,26 +92,28 @@ FocusScope {
 
             delegate: Item {
                 id: row
-                width:  menuList.width
+                width: menuList.width
                 height: vpx(56)
 
                 readonly property bool isCurrent: ListView.isCurrentItem
                 readonly property bool isHovered: rowArea.containsMouse
-                readonly property bool isCancel:  model.sortId === "__cancel__"
+                readonly property bool isCancel: model.sortId === "__cancel__"
 
                 Rectangle {
                     anchors { left: parent.left; right: parent.right; top: parent.top }
                     height: vpx(2)
-                    color: "#05070a"
+                    color: _separator
                     visible: row.isCancel
+                    Behavior on color { ColorAnimation { duration: 150 } }
                 }
 
                 Rectangle {
                     anchors.fill: parent
-                    color: row.isCurrent
-                    ? "#ffffff"
-                    : (row.isHovered ? "#3d4450" : "transparent")
-
+                    color: {
+                        if (row.isCurrent) return _itemBgCurrent
+                            if (row.isHovered) return _itemBgHover
+                                return _itemBgNormal
+                    }
                     Behavior on color { ColorAnimation { duration: 80 } }
                 }
 
@@ -113,10 +127,9 @@ FocusScope {
                     }
 
                     text: model.label
-                    color: row.isCurrent ? "#23262e" : "#c6d4df"
+                    color: row.isCurrent ? _textCurrent : _textNormal
                     font.pixelSize: vpx(14)
                     font.family: global.fonts.sans
-
                     Behavior on color { ColorAnimation { duration: 80 } }
                 }
 
@@ -149,14 +162,12 @@ FocusScope {
             }
 
             Keys.onUpPressed: {
-                menuList.currentIndex =
-                (menuList.currentIndex - 1 + menuList.count) % menuList.count
+                menuList.currentIndex = (menuList.currentIndex - 1 + menuList.count) % menuList.count
                 event.accepted = true
             }
 
             Keys.onDownPressed: {
-                menuList.currentIndex =
-                (menuList.currentIndex + 1) % menuList.count
+                menuList.currentIndex = (menuList.currentIndex + 1) % menuList.count
                 event.accepted = true
             }
         }

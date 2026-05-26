@@ -1,4 +1,4 @@
-// WTF-Library Theme
+// BigScreenFE Theme
 // Copyright (C) 2026 Gonzalo
 //
 // Licensed under Creative Commons
@@ -16,9 +16,21 @@ FocusScope {
     property bool currentIsCollections: false
     property string currentShortName: ""
     property bool isSearching: false
+    property bool lightTheme: false
 
     signal focusUpRequested()
     signal cancelRequested()
+
+    readonly property color _textActive: lightTheme ? "#040608" : "#ffffff"
+    readonly property color _textInactive: lightTheme ? "#0d1117" : "#ffffff"
+    readonly property color _badgeActive: lightTheme ? "#040608" : "#7e848c"
+    readonly property color _badgeInactive: lightTheme ? "#5a6472" : "#7e848c"
+    readonly property color _bgActive: lightTheme ? "#ffffff" : "#292b2d"
+    readonly property color _bgInactive: "transparent"
+    readonly property color _bgHover: lightTheme ? "#e2e8f0" : "#292b2d"
+    readonly property color _bgFocus: lightTheme ? "#0d1117" : "#ffffff"
+    readonly property color _textFocus: lightTheme ? "#ffffff" : "#040608"
+    readonly property color _badgeFocus: lightTheme ? "#ffffff" : "#040608"
 
     CollecListModel { id: collecModel }
 
@@ -76,7 +88,7 @@ FocusScope {
                 }
             }
 
-            width:  tabRow.implicitWidth + vpx(48)
+            width: tabRow.implicitWidth + vpx(48)
             height: listView.height
 
             Rectangle {
@@ -84,9 +96,12 @@ FocusScope {
                 width: tabRow.implicitWidth + vpx(40)
                 height: vpx(40)
                 radius: vpx(20)
-                color: tabItem.active
-                ? (tabItem.hasFocus ? "#ffffff" : "#292b2d")
-                : (tabItem.hovered ? "#292b2d" : "transparent")
+                color: {
+                    if (active && hasFocus) return _bgFocus
+                        if (active) return _bgActive
+                            if (hovered) return _bgHover
+                                return _bgInactive
+                }
                 Behavior on color { ColorAnimation { duration: 150 } }
             }
 
@@ -99,12 +114,14 @@ FocusScope {
                     id: tabLabel
                     anchors.verticalCenter: parent.verticalCenter
                     text: model.name.toUpperCase()
-                    color: tabItem.active
-                    ? (tabItem.hasFocus ? "#040608" : "#ffffff")
-                    : "#ffffff"
+                    color: {
+                        if (active && hasFocus) return _textFocus
+                            if (active) return _textActive
+                                return _textInactive
+                    }
                     font.family: global.fonts.sans
                     font.pixelSize: vpx(18)
-                    font.bold: tabItem.active
+                    font.bold: active
                     Behavior on color { ColorAnimation { duration: 150 } }
                 }
 
@@ -115,9 +132,11 @@ FocusScope {
                     font.family: global.fonts.sans
                     font.pixelSize: vpx(18)
                     font.bold: true
-                    color: tabItem.active
-                    ? (tabItem.hasFocus ? "#040608" : "#7e848c")
-                    : "#7e848c"
+                    color: {
+                        if (active && hasFocus) return _badgeFocus
+                            if (active) return _badgeActive
+                                return _badgeInactive
+                    }
                     Behavior on color { ColorAnimation { duration: 150 } }
                 }
             }
@@ -133,7 +152,7 @@ FocusScope {
             }
         }
 
-        Keys.onLeftPressed:  if (currentIndex > 0) currentIndex--
+        Keys.onLeftPressed: if (currentIndex > 0) currentIndex--
         Keys.onRightPressed: if (currentIndex < model.count - 1) currentIndex++
 
         Keys.onUpPressed: {
@@ -146,7 +165,6 @@ FocusScope {
 
     Keys.onPressed: {
         if (!event.isAutoRepeat && api.keys.isCancel(event)) {
-            //console.log("[CollecListView] cancelRequested emitido, isSearching=", root.isSearching);
             event.accepted = true;
             root.cancelRequested();
         }
