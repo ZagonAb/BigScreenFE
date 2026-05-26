@@ -282,7 +282,7 @@ FocusScope {
             color: lightTheme ? "#0d1117" : "#ffffff"
             Text {
                 anchors.centerIn: parent
-                text: "¡%$#@!-Library RA"
+                text: "BigScreenFE RA"
                 font.pixelSize: vpx(14); font.bold: true
                 font.family: global.fonts.sans
                 color: lightTheme ? "#ffffff" : "#050d14"
