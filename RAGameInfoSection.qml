@@ -484,8 +484,9 @@ FocusScope {
             var consoleCheckRequired = raConsoles.length > 0;
             var consoleOk = !consoleCheckRequired || bestConsoleMatch || (bestF1Base >= 2.0);
 
+            var F1_MIN = 0.50;
             var accepted = best
-            && bestF1Base > 0.0
+            && bestF1Base >= F1_MIN
             && best.score >= THRESHOLD
             && consoleOk;
 
