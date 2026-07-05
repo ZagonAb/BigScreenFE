@@ -106,9 +106,20 @@ FocusScope {
         xhr.send();
     }
 
+    function _romanToArabic(str) {
+        var map = {
+            "xv": "15", "xiv": "14", "xiii": "13", "xii": "12", "xi": "11",
+            "x": "10", "ix": "9", "viii": "8", "vii": "7", "vi": "6",
+            "v": "5", "iv": "4", "iii": "3", "ii": "2", "i": "1"
+        };
+        return str.replace(/\b(x(?:iv|v|i{1,3})?|i{1,3}|iv|vi{0,3}|viii|ix)\b/g, function(m) {
+            return map[m] || m;
+        });
+    }
+
     function _normalize(str) {
         if (!str) return "";
-        return str.toLowerCase()
+        return _romanToArabic(str.toLowerCase())
         .replace(/\b(the|a|an)\b\s*/g, "")
         .replace(/[:\-\u2013_',\.\!?®™©\(\)\[\]\/\\]/g, " ")
         .replace(/\s+/g, " ")
@@ -116,7 +127,7 @@ FocusScope {
     }
 
     function _words(norm) {
-        return norm.split(" ").filter(function(w){ return w.length >= 2; });
+        return norm.split(" ").filter(function(w){ return w.length >= 1; });
     }
 
     function _matchScore(pegTitle, raTitle) {
@@ -142,7 +153,14 @@ FocusScope {
         var recall = rWords.length > 0 ? hitsR / rWords.length : 0;
 
         if (precision + recall === 0) return 0.0;
-        return 2.0 * precision * recall / (precision + recall);
+        var f1 = 2.0 * precision * recall / (precision + recall);
+
+        var extraInRA  = rWords.length - hitsR;
+        var extraInPeg = pWords.length - hitsP;
+        if (extraInRA > 0)  f1 = Math.max(0.0, f1 - (extraInRA  / rWords.length) * 0.5);
+        if (extraInPeg > 0) f1 = Math.max(0.0, f1 - (extraInPeg / pWords.length) * 0.5);
+
+        return f1;
     }
 
     readonly property var _consoleMappings: ({
@@ -482,9 +500,9 @@ FocusScope {
                 }
             }
             var consoleCheckRequired = raConsoles.length > 0;
-            var consoleOk = !consoleCheckRequired || bestConsoleMatch || (bestF1Base >= 2.0);
+            var consoleOk = !consoleCheckRequired || bestConsoleMatch;
 
-            var F1_MIN = 0.50;
+            var F1_MIN = 0.70;
             var accepted = best
             && bestF1Base >= F1_MIN
             && best.score >= THRESHOLD
@@ -548,6 +566,10 @@ FocusScope {
                 var s = scored[ti];
                 _log("  [" + s.score.toFixed(3) + "] '" + (s.g.Title || "?")
                 + "' ID=" + (s.g.ID || s.g.GameID || "?"));
+                console.log("[RA:fallback:top8] #" + (ti+1),
+                            "score=" + s.score.toFixed(3),
+                            "| title='" + (s.g.Title || "?") + "'",
+                            "| ID=" + (s.g.ID || s.g.GameID || "?"));
             }
             _log("------------------------");
 
