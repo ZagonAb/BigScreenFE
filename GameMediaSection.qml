@@ -301,7 +301,7 @@ FocusScope {
                     height: vpx(24)
                     gradient: Gradient {
                         GradientStop { position: 0.0; color: "transparent" }
-                        GradientStop { position: 1.0; color: _textOverlay }
+                        GradientStop { position: 1.0; color: "#0d1921" }
                     }
                 }
 
@@ -311,9 +311,9 @@ FocusScope {
                         leftMargin: vpx(5); rightMargin: vpx(5); bottomMargin: vpx(3)
                     }
                     text: modelData.label
-                    color: _labelText
+                    color: "white"
                     font.family: global.fonts.sans
-                    font.pixelSize: vpx(8)
+                    font.pixelSize: vpx(10)
                     font.bold: true
                     elide: Text.ElideRight
                     Behavior on color { ColorAnimation { duration: 300 } }

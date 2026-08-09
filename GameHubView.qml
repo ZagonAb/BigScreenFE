@@ -171,8 +171,8 @@ FocusScope {
                         leftMargin: vpx(48)
                         bottomMargin: vpx(18)
                     }
-                    width: vpx(320)
-                    height: vpx(100)
+                    width: vpx(420)
+                    height: vpx(200)
 
                     Image {
                         id: _logoImg
@@ -416,8 +416,8 @@ FocusScope {
                                 }
 
                                 Item {
-                                    width: vpx(110)
-                                    height: vpx(4)
+                                    width: vpx(116)
+                                    height: vpx(6)
                                     anchors.verticalCenter: parent.verticalCenter
 
                                     Rectangle {

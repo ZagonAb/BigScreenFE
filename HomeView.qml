@@ -70,14 +70,14 @@ FocusScope {
         sorters: RoleSorter { roleName: "lastPlayed"; sortOrder: Qt.DescendingOrder }
     }
 
-    readonly property int _recentCount: 3
+    readonly property int _recentCount: 6
     readonly property int _totalSlots: _recentCount + 1
     property var _recentGames: []
 
     function _rebuildCache() {
         var arr = [];
         var usedTitles = {};
-        var recentLimit = Math.min(_recentSrc.count, 3);
+        var recentLimit = Math.min(_recentSrc.count, _recentCount);
         for (var i = 0; i < recentLimit; i++) {
             var proxy = _recentSrc.get(i);
             if (!proxy) continue;
@@ -91,7 +91,7 @@ FocusScope {
             }
         }
 
-        for (var k = 0; k < api.allGames.count && arr.length < 3; k++) {
+        for (var k = 0; k < api.allGames.count && arr.length < _recentCount; k++) {
             var fg = api.allGames.get(k);
             if (fg && !usedTitles[fg.title]) {
                 arr.push(fg);
@@ -118,7 +118,7 @@ FocusScope {
         _raLoading = true;
         var xhr = new XMLHttpRequest();
         var url = "https://retroachievements.org/API/API_GetUserRecentlyPlayedGames.php"
-        + "?y=" + _raApiKey + "&u=" + _raUser + "&c=4";
+        + "?y=" + _raApiKey + "&u=" + _raUser + "&c=8";
         xhr.open("GET", url, true);
         xhr.onreadystatechange = function() {
             if (xhr.readyState !== XMLHttpRequest.DONE) return;
@@ -128,7 +128,7 @@ FocusScope {
                 var arr = JSON.parse(xhr.responseText);
                 if (!Array.isArray(arr)) return;
                 var result = [];
-                for (var i = 0; i < arr.length && i < 4; i++) {
+                for (var i = 0; i < arr.length && i < 8; i++) {
                     var g = arr[i];
                     result.push({
                         title: g.Title || "",
@@ -275,7 +275,7 @@ FocusScope {
         var result = [];
         var reasons = [];
 
-        for (var pi = 0; pi < poolPlayed.length && result.length < 3; pi++) {
+        for (var pi = 0; pi < poolPlayed.length && result.length < 6; pi++) {
             result.push(poolPlayed[pi].game);
             reasons.push(poolPlayed[pi].reason);
         }
@@ -284,10 +284,10 @@ FocusScope {
         rest.sort(function(a, b) { return b.score - a.score; });
 
         var favUsed = 0;
-        for (var ri = 0; ri < rest.length && result.length < 4; ri++) {
+        for (var ri = 0; ri < rest.length && result.length < 8; ri++) {
             var isUnplayedFav = !rest[ri].game.playCount && !rest[ri].game.playTime && rest[ri].game.favorite;
             if (isUnplayedFav) {
-                if (favUsed >= 1) continue;
+                if (favUsed >= 2) continue;
                 favUsed++;
             }
             result.push(rest[ri].game);
@@ -428,7 +428,7 @@ FocusScope {
                 font.bold: true
                 font.family: global.fonts.sans
                 color: root.lightTheme ? "#0d1117" : "#ffffff"
-                visible: _strip.currentIndex < Math.min(_recentSrc.count, 3)
+                visible: _strip.currentIndex < Math.min(_recentSrc.count, _recentCount)
                 Behavior on color { ColorAnimation { duration: 400 } }
                 Behavior on opacity { NumberAnimation { duration: 200 } }
                 opacity: visible ? 0.9 : 0.0
@@ -451,7 +451,24 @@ FocusScope {
                 interactive: false
                 highlightMoveDuration: 0
                 highlightRangeMode: ListView.NoHighlightRange
-                Binding on contentX { value: 0 }
+
+                Behavior on contentX {
+                    NumberAnimation { duration: 220; easing.type: Easing.OutQuad }
+                }
+                onCurrentIndexChanged: positionViewAtIndex(currentIndex, ListView.Center)
+
+                Component.onCompleted: {
+                    _stripInitTimer.restart()
+                }
+
+                Timer {
+                    id: _stripInitTimer
+                    interval: 50
+                    repeat: false
+                    onTriggered: {
+                        _strip.positionViewAtIndex(0, ListView.Center)
+                    }
+                }
 
                 model: root._totalSlots
 
@@ -578,7 +595,7 @@ FocusScope {
                         id: _selRect
                         anchors.fill: parent
                         property real borderExtra: 0
-                        anchors.margins: vpx(-3.5) - borderExtra
+                         anchors.margins: vpx(-3.5) - borderExtra
                         border.width: vpx(1.5) + borderExtra
                         border.color: root.lightTheme ? "#05070a" : "#c7c7c7"
 
@@ -647,6 +664,7 @@ FocusScope {
 
             Item {
                 id: _info
+                visible: _strip.currentIndex === 0
                 anchors { left: parent.left; top: _strip.bottom; topMargin: vpx(14) }
                 width: vpx(460)
                 height: vpx(52)
@@ -666,6 +684,57 @@ FocusScope {
 
                 Row {
                     anchors { top: _titleText.bottom; left: parent.left; topMargin: vpx(4) }
+                    spacing: vpx(5)
+                    visible: !root.onViewMore && (root.currentPlaytime !== "" || root.currentLastPlayed !== "")
+
+                    Text {
+                        text: "▶"; font.pixelSize: vpx(10); font.family: global.fonts.sans
+                        color: root.lightTheme ? "#1a6b7a" : "#57cbde"
+                        anchors.verticalCenter: parent.verticalCenter
+                        Behavior on color { ColorAnimation { duration: 400 } }
+                    }
+                    Text {
+                        text: {
+                            var lp = root.currentLastPlayed;
+                            var pt = root.currentPlaytime;
+                            if (lp !== "" && pt !== "") return lp + ": " + pt;
+                            if (pt !== "") return "PLAYTIME: " + pt;
+                            if (lp !== "") return lp;
+                            return "";
+                        }
+                        font.pixelSize: vpx(12); font.bold: true
+                        font.family: global.fonts.sans
+                        color: root.lightTheme ? "#1a6b7a" : "#57cbde"
+                        Behavior on color { ColorAnimation { duration: 400 } }
+                    }
+                }
+            }
+
+            Item {
+                id: _infoSelected
+                visible: _strip.currentIndex !== 0
+                x: _strip.currentItem ? (_strip.currentItem.x - _strip.contentX) : 0
+                anchors { top: _strip.bottom; topMargin: vpx(14) }
+                width: vpx(460)
+                height: vpx(52)
+
+                Behavior on x { NumberAnimation { duration: 220; easing.type: Easing.OutQuad } }
+
+                Text {
+                    id: _titleTextSelected
+                    anchors { top: parent.top; left: parent.left }
+                    text: root.onViewMore ? "Access your game library" : root.currentTitle
+                    font.pixelSize: vpx(20)
+                    font.bold: true
+                    font.family: global.fonts.sans
+                    color: root.lightTheme ? "#0d1117" : "#ffffff"
+                    elide: Text.ElideRight
+                    width: parent.width
+                    Behavior on color { ColorAnimation { duration: 400 } }
+                }
+
+                Row {
+                    anchors { top: _titleTextSelected.bottom; left: parent.left; topMargin: vpx(4) }
                     spacing: vpx(5)
                     visible: !root.onViewMore && (root.currentPlaytime !== "" || root.currentLastPlayed !== "")
 
@@ -723,7 +792,11 @@ FocusScope {
                 interactive: false
                 highlightMoveDuration: 0
                 highlightRangeMode: ListView.NoHighlightRange
-                Binding on contentX { value: 0 }
+
+                Behavior on contentX {
+                    NumberAnimation { duration: 220; easing.type: Easing.OutQuad }
+                }
+                onCurrentIndexChanged: positionViewAtIndex(currentIndex, ListView.Contain)
 
                 model: root._recGames.length
 
@@ -1183,7 +1256,12 @@ FocusScope {
                 highlightRangeMode: ListView.NoHighlightRange
                 currentIndex: 0
 
-                model: Math.min(root._raRecentGames.length, 4)
+                Behavior on contentX {
+                    NumberAnimation { duration: 220; easing.type: Easing.OutQuad }
+                }
+                onCurrentIndexChanged: positionViewAtIndex(currentIndex, ListView.Contain)
+
+                model: Math.min(root._raRecentGames.length, 8)
 
                 readonly property real cardW: (width - vpx(16) * 3) / 4
                 readonly property real imgH: vpx(160)
