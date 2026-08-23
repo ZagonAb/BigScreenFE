@@ -636,7 +636,7 @@ FocusScope {
         height: parent.height
         gradient: Gradient {
             GradientStop { position: 0.0; color: "transparent" }
-            GradientStop { position: 0.6; color: root.lightTheme ? "#dfe3e8" : "#0b1117" }
+            GradientStop { position: 0.7; color: root.lightTheme ? "#dfe3e8" : "#0b1117" }
             GradientStop { position: 1.0; color: root.lightTheme ? "#dfe3e8" : "#0b1117" }
         }
     }
