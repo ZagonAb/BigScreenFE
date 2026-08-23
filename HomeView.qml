@@ -299,7 +299,7 @@ FocusScope {
     }
 
     function resetFocus() {
-        _strip.currentIndex = 0;
+        _strip.goTo(0);
         _strip.forceActiveFocus();
     }
 
@@ -744,6 +744,14 @@ FocusScope {
                 highlightMoveDuration: 0
                 highlightRangeMode: ListView.NoHighlightRange
 
+                property bool _slideXEnabled: true
+
+                function goTo(newIndex) {
+                    if (newIndex < 0 || newIndex >= count || newIndex === currentIndex) return;
+                    _slideXEnabled = (currentIndex === 0 || newIndex === 0);
+                    currentIndex = newIndex;
+                }
+
                 Behavior on contentX {
                     NumberAnimation { duration: 220; easing.type: Easing.OutQuad }
                 }
@@ -776,7 +784,6 @@ FocusScope {
                     width: _cardW
                     height: _strip.height
                     scale: isCurrent && _strip.activeFocus ? 1.03 : 1.0
-                    opacity: isCurrent ? 1.0 : (_strip.activeFocus ? 0.85 : 1.0)
                     Behavior on scale { NumberAnimation { duration: 120 } }
                     Behavior on opacity { NumberAnimation { duration: 150 } }
 
@@ -912,13 +919,13 @@ FocusScope {
 
                     MouseArea {
                         anchors.fill: parent
-                        onClicked: { _strip.currentIndex = index; _strip.forceActiveFocus(); }
+                        onClicked: { _strip.goTo(index); _strip.forceActiveFocus(); }
                         onDoubleClicked: { if (_cell._isViewMore) root.goToLibrary(); else if (_cell._game) root.openHub(_cell._game); }
                     }
                 }
 
-                Keys.onLeftPressed: { if (currentIndex > 0) currentIndex--; event.accepted = true; }
-                Keys.onRightPressed: { if (currentIndex < count - 1) currentIndex++; event.accepted = true; }
+                Keys.onLeftPressed: { if (currentIndex > 0) goTo(currentIndex - 1); event.accepted = true; }
+                Keys.onRightPressed: { if (currentIndex < count - 1) goTo(currentIndex + 1); event.accepted = true; }
                 Keys.onUpPressed: { event.accepted = true; root.focusSearchRequested(); }
                 Keys.onDownPressed: {
                     event.accepted = true;
@@ -940,12 +947,12 @@ FocusScope {
                     }
                     if (api.keys.isNextPage(event)) {
                         event.accepted = true;
-                        if (currentIndex < count - 1) currentIndex++;
+                        if (currentIndex < count - 1) goTo(currentIndex + 1);
                         return;
                     }
                     if (api.keys.isPrevPage(event)) {
                         event.accepted = true;
-                        if (currentIndex > 0) currentIndex--;
+                        if (currentIndex > 0) goTo(currentIndex - 1);
                         return;
                     }
                     if (!event.isAutoRepeat && api.keys.isCancel(event)) {
@@ -1010,45 +1017,76 @@ FocusScope {
                 width: vpx(460)
                 height: vpx(52)
 
-                Behavior on x { NumberAnimation { duration: 220; easing.type: Easing.OutQuad } }
-
-                Text {
-                    id: _titleTextSelected
-                    anchors { top: parent.top; left: parent.left }
-                    text: root.onViewMore ? "Access your game library" : root.currentTitle
-                    font.pixelSize: vpx(20)
-                    font.bold: true
-                    font.family: global.fonts.sans
-                    color: root.lightTheme ? "#0d1117" : "#ffffff"
-                    elide: Text.ElideRight
-                    width: parent.width
-                    Behavior on color { ColorAnimation { duration: 400 } }
+                Behavior on x {
+                    enabled: _strip._slideXEnabled
+                    NumberAnimation { duration: 220; easing.type: Easing.OutQuad }
                 }
 
-                Row {
-                    anchors { top: _titleTextSelected.bottom; left: parent.left; topMargin: vpx(4) }
-                    spacing: vpx(5)
-                    visible: !root.onViewMore && (root.currentPlaytime !== "" || root.currentLastPlayed !== "")
+                Column {
+                    id: _infoSelectedContent
+                    anchors { top: parent.top; left: parent.left }
+                    width: parent.width
+                    spacing: vpx(4)
+
+                    opacity: 0
+                    transform: Translate { id: _infoSelectedTranslate; y: vpx(16) }
+
+                    function replay() {
+                        _infoSelectedEnterAnim.stop();
+                        _infoSelectedContent.opacity = 0;
+                        _infoSelectedTranslate.y = vpx(16);
+                        _infoSelectedEnterAnim.start();
+                    }
+
+                    ParallelAnimation {
+                        id: _infoSelectedEnterAnim
+                        NumberAnimation { target: _infoSelectedContent; property: "opacity"; to: 1; duration: 260; easing.type: Easing.InQuad }
+                        NumberAnimation { target: _infoSelectedTranslate; property: "y"; to: 0; duration: 260; easing.type: Easing.OutCubic }
+                    }
 
                     Text {
-                        text: "▶"; font.pixelSize: vpx(10); font.family: global.fonts.sans
-                        color: root.lightTheme ? "#1a6b7a" : "#57cbde"
-                        anchors.verticalCenter: parent.verticalCenter
+                        id: _titleTextSelected
+                        text: root.onViewMore ? "Access your game library" : root.currentTitle
+                        font.pixelSize: vpx(20)
+                        font.bold: true
+                        font.family: global.fonts.sans
+                        color: root.lightTheme ? "#0d1117" : "#ffffff"
+                        elide: Text.ElideRight
+                        width: parent.width
                         Behavior on color { ColorAnimation { duration: 400 } }
                     }
-                    Text {
-                        text: {
-                            var lp = root.currentLastPlayed;
-                            var pt = root.currentPlaytime;
-                            if (lp !== "" && pt !== "") return lp + ": " + pt;
-                            if (pt !== "") return "PLAYTIME: " + pt;
-                            if (lp !== "") return lp;
-                            return "";
+
+                    Row {
+                        spacing: vpx(5)
+                        visible: !root.onViewMore && (root.currentPlaytime !== "" || root.currentLastPlayed !== "")
+
+                        Text {
+                            text: "▶"; font.pixelSize: vpx(10); font.family: global.fonts.sans
+                            color: root.lightTheme ? "#1a6b7a" : "#57cbde"
+                            anchors.verticalCenter: parent.verticalCenter
+                            Behavior on color { ColorAnimation { duration: 400 } }
                         }
-                        font.pixelSize: vpx(12); font.bold: true
-                        font.family: global.fonts.sans
-                        color: root.lightTheme ? "#1a6b7a" : "#57cbde"
-                        Behavior on color { ColorAnimation { duration: 400 } }
+                        Text {
+                            text: {
+                                var lp = root.currentLastPlayed;
+                                var pt = root.currentPlaytime;
+                                if (lp !== "" && pt !== "") return lp + ": " + pt;
+                                if (pt !== "") return "PLAYTIME: " + pt;
+                                if (lp !== "") return lp;
+                                return "";
+                            }
+                            font.pixelSize: vpx(12); font.bold: true
+                            font.family: global.fonts.sans
+                            color: root.lightTheme ? "#1a6b7a" : "#57cbde"
+                            Behavior on color { ColorAnimation { duration: 400 } }
+                        }
+                    }
+                }
+
+                Connections {
+                    target: _strip
+                    function onCurrentIndexChanged() {
+                        if (_strip.currentIndex !== 0) _infoSelectedContent.replay();
                     }
                 }
             }
@@ -1490,7 +1528,7 @@ FocusScope {
                     }
                     if (!event.isAutoRepeat && api.keys.isCancel(event)) {
                         event.accepted = true;
-                        _strip.currentIndex = 0;
+                        _strip.goTo(0);
                         _strip.forceActiveFocus();
                     }
                 }
@@ -1731,7 +1769,7 @@ FocusScope {
                     }
                     if (!event.isAutoRepeat && api.keys.isCancel(event)) {
                         event.accepted = true;
-                        _strip.currentIndex = 0;
+                        _strip.goTo(0);
                         _strip.forceActiveFocus();
                     }
                 }

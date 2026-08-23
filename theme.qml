@@ -52,11 +52,106 @@ FocusScope {
     property string _searchOrigin: "home"
     property bool _searchFromHub: false
 
+    property real _homeScale: 1.0
+    property real _homeOpacity: 1.0
+    property real _hubScale: 1.0
+    property real _hubOpacity: 0.0
+    property bool _suppressTransition: false
+
+    Behavior on _homeScale {
+        enabled: !root._suppressTransition
+        NumberAnimation { duration: 360; easing.type: Easing.InOutCubic }
+    }
+    Behavior on _homeOpacity {
+        enabled: !root._suppressTransition
+        NumberAnimation { duration: 260; easing.type: Easing.InOutCubic }
+    }
+    Behavior on _hubScale {
+        enabled: !root._suppressTransition
+        NumberAnimation { duration: 400; easing.type: Easing.OutCubic }
+    }
+    Behavior on _hubOpacity {
+        enabled: !root._suppressTransition
+        NumberAnimation { duration: 300; easing.type: Easing.OutCubic }
+    }
+
+    function _startHubEnterAnim() {
+        _suppressTransition = true;
+        _hubScale = 0.92;
+        _hubOpacity = 0.0;
+        _suppressTransition = false;
+        _hubEnterTimer.restart();
+    }
+
+    function _startHubExitAnim() {
+        _suppressTransition = true;
+        _homeScale = 0.95;
+        _homeOpacity = 0.0;
+        _suppressTransition = false;
+        _homeEnterTimer.restart();
+    }
+
+    Timer {
+        id: _hubEnterTimer
+        interval: 16
+        repeat: false
+        onTriggered: {
+            _homeScale  = 1.08;
+            _homeOpacity = 0.0;
+            _hubScale = 1.0;
+            _hubOpacity = 1.0;
+        }
+    }
+
+    Timer {
+        id: _homeEnterTimer
+        interval: 16
+        repeat: false
+        onTriggered: {
+            _hubScale = 1.07;
+            _hubOpacity = 0.0;
+            _homeScale = 1.0;
+            _homeOpacity = 1.0;
+        }
+    }
+
+    Timer {
+        id: _hubExitCleanupTimer
+        interval: 430
+        repeat: false
+        onTriggered: {
+            hubLoader.active = false;
+            hubLoader.game = null;
+        }
+    }
+
     function goHome() {
+        if (currentScreen === "library") {
+            _searchFromHub = false;
+            _suppressTransition = true;
+            _homeScale = 0.95;
+            _homeOpacity = 0.0;
+            _suppressTransition = false;
+            currentScreen = "home";
+            _libraryToHomeTimer.restart();
+            _focusHomeTimer.start();
+            return;
+        }
+
         _closeHub();
         _searchFromHub = false;
         currentScreen = "home";
         if (homeLoader.item) homeLoader.item.forceActiveFocus();
+    }
+
+    Timer {
+        id: _libraryToHomeTimer
+        interval: 16
+        repeat: false
+        onTriggered: {
+            _homeScale = 1.0;
+            _homeOpacity = 1.0;
+        }
     }
 
     function goLibrary() {
@@ -109,6 +204,7 @@ FocusScope {
         hubLoader.game = game;
         hubLoader.active = true;
         currentScreen = "hub";
+        _startHubEnterAnim();
         _focusHubTimer.start();
     }
 
@@ -139,10 +235,23 @@ FocusScope {
     function _closeHub() {
         var prev = hubLoader._prevScreen;
         currentScreen = prev;
-        hubLoader.active = false;
-        hubLoader.game = null;
+
         if (_searchOrigin === "hub")
             _searchOrigin = (prev === "home") ? "home" : "library";
+
+        if (prev === "home") {
+            _startHubExitAnim();
+            _hubExitCleanupTimer.restart();
+        } else {
+            _suppressTransition = true;
+            _hubScale = 1.0;
+            _hubOpacity = 0.0;
+            _homeScale = 1.0;
+            _homeOpacity = 1.0;
+            _suppressTransition = false;
+            hubLoader.active = false;
+            hubLoader.game = null;
+        }
     }
 
     Timer { id: _focusGridTimer; interval: 0; repeat: false; onTriggered: { if (gameGridLoader.item) gameGridLoader.item.forceActiveFocus() } }
@@ -238,209 +347,173 @@ FocusScope {
         z: 0
 
         Item {
-            id: blurableLayer
+            id: _homeSceneWrapper
             anchors.fill: parent
+            z: 1
+            visible: root.onHome || root.onLibrary || root._homeOpacity > 0.01
+            opacity: root._homeOpacity
+            transform: Scale {
+                origin.x: _homeSceneWrapper.width  / 2
+                origin.y: _homeSceneWrapper.height / 2
+                xScale: root._homeScale
+                yScale: root._homeScale
+            }
 
-            property real _blurRadius: searchBar.credentialsOpen ? 48 : 0
-            Behavior on _blurRadius { NumberAnimation { duration: 250; easing.type: Easing.InOutQuad } }
-            layer.enabled: searchBar.credentialsOpen || _blurRadius > 0.5
-            layer.effect: FastBlur { radius: blurableLayer._blurRadius }
-
-            Rectangle {
+            Item {
+                id: blurableLayer
                 anchors.fill: parent
-                color: root.lightTheme ? "#dfe3e8" : "#0b1117"
-                opacity: root.onHub && hubLoader.item && hubLoader.item.playHasFocus ? 0.0 : 1.0
-                Behavior on color { ColorAnimation { duration: 400; easing.type: Easing.InOutQuad } }
-                Behavior on opacity { NumberAnimation { duration: 450; easing.type: Easing.InOutQuad } }
-            }
 
-            Loader {
-                id: homeLoader
-                anchors.fill: parent
-                active: false
-                visible: root.onHome && status === Loader.Ready
-                z: 1
+                property real _blurRadius: searchBar.credentialsOpen ? 48 : 0
+                Behavior on _blurRadius { NumberAnimation { duration: 250; easing.type: Easing.InOutQuad } }
+                layer.enabled: searchBar.credentialsOpen || _blurRadius > 0.5
+                layer.effect: FastBlur { radius: blurableLayer._blurRadius }
 
-                sourceComponent: HomeView {
+                Rectangle {
+                    anchors.fill: parent
+                    color: root.lightTheme ? "#dfe3e8" : "#0b1117"
+                    opacity: root.onHub && hubLoader.item && hubLoader.item.playHasFocus ? 0.0 : 1.0
+                    Behavior on color { ColorAnimation { duration: 400; easing.type: Easing.InOutQuad } }
+                    Behavior on opacity { NumberAnimation { duration: 450; easing.type: Easing.InOutQuad } }
+                }
+
+                Loader {
+                    id: homeLoader
+                    anchors.fill: parent
+                    active: false
+                    visible: (root.onHome || (!root.onLibrary && root._homeOpacity > 0.01)) && status === Loader.Ready
+
+                    sourceComponent: HomeView {
+                        lightTheme: root.lightTheme
+                        onGoToLibrary: root.goLibrary()
+                        onFocusSearchRequested: searchBar.activate()
+                        onOpenHub: root.openHub(game)
+                        onOpenRA: root.openRA(game, raGameId)
+
+                        Component.onCompleted: {
+                            console.log("HomeView cargado completamente");
+                            Qt.callLater(function() { splashScreen.opacity = 0; resetFocus(); });
+                        }
+                    }
+                    onStatusChanged: { if (status === Loader.Ready) console.log("HomeLoader listo") }
+                }
+
+                Rectangle {
+                    id: collecBarBg
+                    anchors { left: parent.left; right: parent.right }
+                    y: searchBar.height
+                    height: collecBar.height + vpx(3)
+                    z: 1000
+                    color: root.theme_barBg
+                    opacity: root.onLibrary && gameGridLoader.item && gameGridLoader.item.contentY > vpx(10) ? 0.97 : 0.0
+                    Behavior on color { ColorAnimation { duration: 400; easing.type: Easing.InOutQuad } }
+                    Behavior on opacity { NumberAnimation { duration: 450; easing.type: Easing.InOutQuad } }
+                }
+
+                NavButton {
+                    id: btnL1; label: "L1"; side: "left"
+                    anchors { verticalCenter: collecBar.verticalCenter; left: parent.left; leftMargin: vpx(55) }
+                    width: vpx(40); height: vpx(30); z: 1001
+                    visible: root.onLibrary
+                    onClicked: collecBar.prevTab()
                     lightTheme: root.lightTheme
-                    onGoToLibrary: root.goLibrary()
-                    onFocusSearchRequested: searchBar.activate()
-                    onOpenHub: root.openHub(game)
-                    onOpenRA: root.openRA(game, raGameId)
-
-                    Component.onCompleted: {
-                        console.log("HomeView cargado completamente");
-                        Qt.callLater(function() { splashScreen.opacity = 0; resetFocus(); });
-                    }
                 }
-                onStatusChanged: { if (status === Loader.Ready) console.log("HomeLoader listo") }
-            }
 
-            Rectangle {
-                id: collecBarBg
-                anchors { left: parent.left; right: parent.right }
-                y: searchBar.height
-                height: collecBar.height + vpx(3)
-                z: 1000
-                color: root.theme_barBg
-                opacity: root.onLibrary && gameGridLoader.item && gameGridLoader.item.contentY > vpx(10) ? 0.97 : 0.0
-                Behavior on color { ColorAnimation { duration: 400; easing.type: Easing.InOutQuad } }
-                Behavior on opacity { NumberAnimation { duration: 450; easing.type: Easing.InOutQuad } }
-            }
-
-            NavButton {
-                id: btnL1; label: "L1"; side: "left"
-                anchors { verticalCenter: collecBar.verticalCenter; left: parent.left; leftMargin: vpx(55) }
-                width: vpx(40); height: vpx(30); z: 1001
-                visible: root.onLibrary
-                onClicked: collecBar.prevTab()
-                lightTheme: root.lightTheme
-            }
-
-            NavButton {
-                id: btnR1; label: "R1"; side: "right"
-                anchors { verticalCenter: collecBar.verticalCenter; right: parent.right; rightMargin: vpx(55) }
-                width: vpx(40); height: vpx(30); z: 1001
-                visible: root.onLibrary
-                onClicked: collecBar.nextTab()
-                lightTheme: root.lightTheme
-            }
-
-            CollecListView {
-                id: collecBar
-                anchors {
-                    left: parent.left; right: parent.right
-                    leftMargin: vpx(72); rightMargin: vpx(72)
-                }
-                y: searchBar.height
-                height: vpx(56)
-                z: 1000
-                visible: root.onLibrary
-                enabled: root.onLibrary
-                isSearching: searchBar.isSearching
-                lightTheme: root.lightTheme
-
-                Keys.onPressed: {
-                    if (api.keys.isPrevPage(event)) { event.accepted = true; collecBar.prevTab() }
-                    if (api.keys.isNextPage(event)) { event.accepted = true; collecBar.nextTab() }
-                }
-                onCancelRequested: {
-                    if (searchBar.hasText || searchBar.isSearching) {
-                        searchBar.clearSearchImmediate();
-                        _focusCollecTimer.start();
-                    } else if (_searchFromHub && !hubLoader.active) {
-                        _searchFromHub = false;
-                        collecBar.focus = false;
-                        root.goHome();
-                    } else {
-                        collecBar.focus = false;
-                        root._goToSearchOrigin();
-                    }
-                }
-                onFocusUpRequested: { collecBar.focus = false; searchBar.activate() }
-                Keys.onDownPressed: {
-                    if (gameGridLoader.item) gameGridLoader.item.forceActiveFocus()
-                        collecBar.focus = false
-                }
-            }
-
-            Loader {
-                id: gameGridLoader
-                anchors {
-                    top: collecBar.bottom; left: parent.left; right: parent.right
-                    leftMargin: vpx(50); rightMargin: vpx(50); topMargin: vpx(12)
-                }
-                height: parent.height - (collecBar.y + collecBar.height + vpx(12)) - bottomBar.height
-                z: 0
-                active: false
-                visible: root.onLibrary && status === Loader.Ready
-
-                sourceComponent: GamesGridView {
-                    id: gameGrid
-
-                    focus: root.onLibrary
-
+                NavButton {
+                    id: btnR1; label: "R1"; side: "right"
+                    anchors { verticalCenter: collecBar.verticalCenter; right: parent.right; rightMargin: vpx(55) }
+                    width: vpx(40); height: vpx(30); z: 1001
+                    visible: root.onLibrary
+                    onClicked: collecBar.nextTab()
                     lightTheme: root.lightTheme
-                    gamesModel: searchBar.isSearching ? searchResultModel : collecBar.currentGames
-                    isCollections: searchBar.isSearching ? false : collecBar.currentIsCollections
-                    currentSortId: sortMenu.activeSortId
-                    preserveSourceOrder: collecBar.currentShortName === "lastplayed"
+                }
 
-                    onPrevTabRequested: collecBar.prevTab()
-                    onNextTabRequested: collecBar.nextTab()
-                    onExitRequested: {
-                        focus = false
-                        collecBar.focus = true
+                CollecListView {
+                    id: collecBar
+                    anchors {
+                        left: parent.left; right: parent.right
+                        leftMargin: vpx(72); rightMargin: vpx(72)
                     }
-                    onSortMenuRequested: if (collecBar.currentShortName !== "lastplayed") sortMenu.open()
-                    onOpenHub: root.openHub(game)
+                    y: searchBar.height
+                    height: vpx(56)
+                    z: 1000
+                    visible: root.onLibrary
+                    enabled: root.onLibrary
+                    isSearching: searchBar.isSearching
+                    lightTheme: root.lightTheme
 
-                    Keys.onUpPressed: {
-                        if (!isCollections || !inCollectionGames) {
+                    Keys.onPressed: {
+                        if (api.keys.isPrevPage(event)) { event.accepted = true; collecBar.prevTab() }
+                        if (api.keys.isNextPage(event)) { event.accepted = true; collecBar.nextTab() }
+                    }
+                    onCancelRequested: {
+                        if (searchBar.hasText || searchBar.isSearching) {
+                            searchBar.clearSearchImmediate();
+                            _focusCollecTimer.start();
+                        } else if (_searchFromHub && !hubLoader.active) {
+                            _searchFromHub = false;
+                            collecBar.focus = false;
+                            root.goHome();
+                        } else if (_searchOrigin === "home") {
+                            collecBar.focus = false;
+                            root.goHome();
+                        } else {
+                            collecBar.focus = false;
+                            root._goToSearchOrigin();
+                        }
+                    }
+                    onFocusUpRequested: { collecBar.focus = false; searchBar.activate() }
+                    Keys.onDownPressed: {
+                        if (gameGridLoader.item) gameGridLoader.item.forceActiveFocus()
+                            collecBar.focus = false
+                    }
+                }
+
+                Loader {
+                    id: gameGridLoader
+                    anchors {
+                        top: collecBar.bottom; left: parent.left; right: parent.right
+                        leftMargin: vpx(50); rightMargin: vpx(50); topMargin: vpx(12)
+                    }
+                    height: parent.height - (collecBar.y + collecBar.height + vpx(12)) - bottomBar.height
+                    z: 0
+                    active: false
+                    visible: root.onLibrary && status === Loader.Ready
+
+                    sourceComponent: GamesGridView {
+                        id: gameGrid
+
+                        focus: root.onLibrary
+
+                        lightTheme: root.lightTheme
+                        gamesModel: searchBar.isSearching ? searchResultModel : collecBar.currentGames
+                        isCollections: searchBar.isSearching ? false : collecBar.currentIsCollections
+                        currentSortId: sortMenu.activeSortId
+                        preserveSourceOrder: collecBar.currentShortName === "lastplayed"
+
+                        onPrevTabRequested: collecBar.prevTab()
+                        onNextTabRequested: collecBar.nextTab()
+                        onExitRequested: {
                             focus = false
                             collecBar.focus = true
                         }
+                        onSortMenuRequested: if (collecBar.currentShortName !== "lastplayed") sortMenu.open()
+                        onOpenHub: root.openHub(game)
+
+                        Keys.onUpPressed: {
+                            if (!isCollections || !inCollectionGames) {
+                                focus = false
+                                collecBar.focus = true
+                            }
+                        }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            propagateComposedEvents: true
+                            onClicked: { parent.forceActiveFocus(); mouse.accepted = false }
+                            onPressed: mouse.accepted = false
+                        }
                     }
-
-                    MouseArea {
-                        anchors.fill: parent
-                        propagateComposedEvents: true
-                        onClicked: { parent.forceActiveFocus(); mouse.accepted = false }
-                        onPressed: mouse.accepted = false
-                    }
-                }
-                onStatusChanged: { if (status === Loader.Ready) console.log("GameGridLoader listo") }
-            }
-
-            Loader {
-                id: hubLoader
-                anchors {
-                    top: parent.top
-                    left: parent.left
-                    right: parent.right
-                }
-                height: parent.height - bottomBar.height
-                z: 500
-                active: false
-                visible: root.onHub && status === Loader.Ready
-
-                property var game: null
-                property string _prevScreen: "home"
-
-                sourceComponent: GameHubView {
-                    game: hubLoader.game
-                    searchBarHeight: searchBar.height
-                    lightTheme: root.lightTheme
-                    onCloseRequested: {
-                        console.log("[closeHub] prev=", hubLoader._prevScreen);
-                        root._closeHub();
-                        root._restoreFocusAfterHub();
-                    }
-                    onPlayRequested: {
-                        if (hubLoader.game) hubLoader.game.launch();
-                    }
-                    onFocusSearchRequested: {
-                        searchBar.activate();
-                    }
-                }
-            }
-
-            Loader {
-                id: raLoader
-                anchors { top: parent.top; left: parent.left; right: parent.right }
-                height: parent.height - bottomBar.height
-                z: 600
-                active: false
-                visible: root.onRA && status === Loader.Ready
-
-                property var game: null
-                property string _prevScreen: "home"
-
-                sourceComponent: RAWebBrowser {
-                    game: raLoader.game
-                    raGameId: root._raGameId
-                    lightTheme: root.lightTheme
-                    onCloseRequested: root._closeRA()
+                    onStatusChanged: { if (status === Loader.Ready) console.log("GameGridLoader listo") }
                 }
             }
         }
@@ -568,6 +641,71 @@ FocusScope {
                         root.goHome()
                     }
                 }
+            }
+        }
+
+        Item {
+            id: _hubWrapper
+            anchors {
+                top: parent.top
+                left: parent.left
+                right: parent.right
+            }
+            height: parent.height - bottomBar.height
+            z: 500
+            visible: root.onHub || root._hubOpacity > 0.01
+            opacity: root._hubOpacity
+            transform: Scale {
+                origin.x: _hubWrapper.width  / 2
+                origin.y: _hubWrapper.height / 2
+                xScale: root._hubScale
+                yScale: root._hubScale
+            }
+
+            Loader {
+                id: hubLoader
+                anchors.fill: parent
+                active: false
+                visible: status === Loader.Ready
+
+                property var game: null
+                property string _prevScreen: "home"
+
+                sourceComponent: GameHubView {
+                    game: hubLoader.game
+                    searchBarHeight: searchBar.height
+                    lightTheme: root.lightTheme
+                    onCloseRequested: {
+                        console.log("[closeHub] prev=", hubLoader._prevScreen);
+                        root._closeHub();
+                        root._restoreFocusAfterHub();
+                    }
+                    onPlayRequested: {
+                        if (hubLoader.game) hubLoader.game.launch();
+                    }
+                    onFocusSearchRequested: {
+                        searchBar.activate();
+                    }
+                }
+            }
+        }
+
+        Loader {
+            id: raLoader
+            anchors { top: parent.top; left: parent.left; right: parent.right }
+            height: parent.height - bottomBar.height
+            z: 600
+            active: false
+            visible: root.onRA && status === Loader.Ready
+
+            property var game: null
+            property string _prevScreen: "home"
+
+            sourceComponent: RAWebBrowser {
+                game: raLoader.game
+                raGameId: root._raGameId
+                lightTheme: root.lightTheme
+                onCloseRequested: root._closeRA()
             }
         }
     }
