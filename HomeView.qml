@@ -303,47 +303,331 @@ FocusScope {
         _strip.forceActiveFocus();
     }
 
-    Component.onCompleted: { _rebuildCache(); _buildRecommended(); _loadRARecent(); }
+    Component.onCompleted: {
+        _rebuildCache();
+        _buildRecommended();
+        _loadRARecent();
+        _switchBackground(root._bgSrc);
+    }
     Connections {
         target: _recentSrc
-        function onCountChanged() { root._rebuildCache(); root._buildRecommended(); }
-    }
-
-    Timer {
-        id: deferredInit
-        interval: 100
-        running: true
-        onTriggered: {
-            _rebuildCache();
-            _buildRecommended();
-            _loadRARecent();
+        function onCountChanged() {
+            root._rebuildCache();
+            root._buildRecommended();
         }
     }
 
-    Image {
-        id: _bgImg
+    Rectangle {
+        id: _bgFallback
         anchors.fill: parent
-        source: root._bgSrc
-        fillMode: Image.PreserveAspectCrop
-        asynchronous: true
-        visible: false
+        color: root.lightTheme ? "#dfe3e8" : "#0b1117"
+        z: -2
+        Behavior on color { ColorAnimation { duration: 400 } }
     }
 
-    FastBlur {
-        anchors.fill: _bgImg
-        source: _bgImg
-        radius: 60
-        opacity: _bgImg.status === Image.Ready && _bgImg.source !== "" ? 1.0 : 0.0
-        Behavior on opacity { NumberAnimation { duration: 400 } }
+    QtObject {
+        id: _cinematic
+
+        property int  activeLayer: 0
+        property real scaleA:   1.0
+        property real offsetXA: 0.0
+        property real offsetYA: 0.0
+        property real scaleB:   1.0
+        property real offsetXB: 0.0
+        property real offsetYB: 0.0
+        property real opacityA: 1.0
+        property real opacityB: 0.0
     }
 
-    Rectangle { anchors.fill: parent; color: root.lightTheme ? "#dfe3e8" : "#0b1117"; z: -1; Behavior on color { ColorAnimation { duration: 400 } } }
+    Item {
+        id: _bgLayerA
+        anchors.fill: parent
+        opacity: _cinematic.opacityA
+        clip: true
+
+        Image {
+            id: _bgImgA
+            width:  parent.width  * 1.13
+            height: parent.height * 1.13
+            anchors.centerIn: parent
+            fillMode: Image.PreserveAspectCrop
+            asynchronous: true
+            smooth: true
+            mipmap: true
+
+            transformOrigin: Item.Center
+            scale: _cinematic.scaleA
+            x: parent.width  * _cinematic.offsetXA
+            y: parent.height * _cinematic.offsetYA
+        }
+    }
+
+    Item {
+        id: _bgLayerB
+        anchors.fill: parent
+        opacity: _cinematic.opacityB
+        clip: true
+
+        Image {
+            id: _bgImgB
+            width:  parent.width  * 1.13
+            height: parent.height * 1.13
+            anchors.centerIn: parent
+            fillMode: Image.PreserveAspectCrop
+            asynchronous: true
+            smooth: true
+            mipmap: true
+
+            transformOrigin: Item.Center
+            scale: _cinematic.scaleB
+            x: parent.width  * _cinematic.offsetXB
+            y: parent.height * _cinematic.offsetYB
+        }
+    }
+
+    SequentialAnimation {
+        id: _kenBurnsA
+        running: false
+        loops: Animation.Infinite
+        ParallelAnimation {
+            NumberAnimation { target: _cinematic; property: "scaleA"; from: 1.0; to: 0.947; duration: 11000; easing.type: Easing.InOutSine }
+            NumberAnimation { target: _cinematic; property: "offsetXA"; from: 0.01; to: -0.01; duration: 11000; easing.type: Easing.InOutSine }
+            NumberAnimation { target: _cinematic; property: "offsetYA"; from: -0.005; to: 0.005; duration: 11000; easing.type: Easing.InOutSine }
+        }
+        ParallelAnimation {
+            NumberAnimation { target: _cinematic; property: "scaleA"; from: 0.947; to: 1.0; duration: 11000; easing.type: Easing.InOutSine }
+            NumberAnimation { target: _cinematic; property: "offsetXA"; from: -0.01; to: 0.01; duration: 11000; easing.type: Easing.InOutSine }
+            NumberAnimation { target: _cinematic; property: "offsetYA"; from: 0.005; to: -0.005; duration: 11000; easing.type: Easing.InOutSine }
+        }
+    }
+
+    SequentialAnimation {
+        id: _kenBurnsB
+        running: false
+        loops: Animation.Infinite
+        ParallelAnimation {
+            NumberAnimation { target: _cinematic; property: "scaleB"; from: 1.0; to: 0.947; duration: 11000; easing.type: Easing.InOutSine }
+            NumberAnimation { target: _cinematic; property: "offsetXB"; from: 0.01; to: -0.01; duration: 11000; easing.type: Easing.InOutSine }
+            NumberAnimation { target: _cinematic; property: "offsetYB"; from: -0.005; to: 0.005; duration: 11000; easing.type: Easing.InOutSine }
+        }
+        ParallelAnimation {
+            NumberAnimation { target: _cinematic; property: "scaleB"; from: 0.947; to: 1.0; duration: 11000; easing.type: Easing.InOutSine }
+            NumberAnimation { target: _cinematic; property: "offsetXB"; from: -0.01; to: 0.01;  duration: 11000; easing.type: Easing.InOutSine }
+            NumberAnimation { target: _cinematic; property: "offsetYB"; from: 0.005; to: -0.005; duration: 11000; easing.type: Easing.InOutSine }
+        }
+    }
+
+    SequentialAnimation {
+        id: _transitionAtoB
+        running: false
+
+        ParallelAnimation {
+            NumberAnimation {
+                target: _cinematic
+                property: "scaleA"
+                to: 1.09
+                duration: 300
+                easing.type: Easing.InOutCubic
+            }
+            NumberAnimation {
+                target: _cinematic
+                property: "opacityA"
+                to: 0.0
+                duration: 360
+                easing.type: Easing.InCubic
+            }
+            NumberAnimation {
+                target: _cinematic
+                property: "scaleB"
+                from: 1.07
+                to: 1.0
+                duration: 520
+                easing.type: Easing.InOutSine
+            }
+            NumberAnimation {
+                target: _cinematic
+                property: "offsetXB"
+                from: 0.015
+                to: 0.01
+                duration: 520
+                easing.type: Easing.InOutSine
+            }
+            NumberAnimation {
+                target: _cinematic
+                property: "offsetYB"
+                from: -0.007
+                to: -0.005
+                duration: 520
+                easing.type: Easing.InOutSine
+            }
+            NumberAnimation {
+                target: _cinematic
+                property: "opacityB"
+                from: 0.0
+                to: 1.0
+                duration: 360
+                easing.type: Easing.OutCubic
+            }
+        }
+
+        ScriptAction { script: _kenBurnsB.start() }
+    }
+
+    SequentialAnimation {
+        id: _transitionBtoA
+        running: false
+
+        ParallelAnimation {
+            NumberAnimation {
+                target: _cinematic
+                property: "scaleB"
+                to: 1.09
+                duration: 300
+                easing.type: Easing.InOutCubic
+            }
+            NumberAnimation {
+                target: _cinematic
+                property: "opacityB"
+                to: 0.0
+                duration: 360
+                easing.type: Easing.InCubic
+            }
+
+            NumberAnimation {
+                target: _cinematic
+                property: "scaleA"
+                from: 1.07
+                to: 1.0
+                duration: 520
+                easing.type: Easing.InOutSine
+            }
+            NumberAnimation {
+                target: _cinematic
+                property: "offsetXA"
+                from: 0.015
+                to: 0.01
+                duration: 520
+                easing.type: Easing.InOutSine
+            }
+            NumberAnimation {
+                target: _cinematic
+                property: "offsetYA"
+                from: -0.007
+                to: -0.005
+                duration: 520
+                easing.type: Easing.InOutSine
+            }
+            NumberAnimation {
+                target: _cinematic
+                property: "opacityA"
+                from: 0.0
+                to: 1.0
+                duration: 360
+                easing.type: Easing.OutCubic
+            }
+        }
+
+        ScriptAction { script: _kenBurnsA.start() }
+    }
+
+    property string _activeSrcPending: ""
+    property string _activeSrc: ""
+    property bool _cinematicInitialized: false
+
+    Timer {
+        id: _bgReadyTimer
+        interval: 16
+        repeat: true
+        running: false
+        onTriggered: {
+            if (!root._cinematicInitialized) {
+                if (_bgImgA.status === Image.Ready || _bgImgA.status === Image.Error) {
+                    root._activeSrc = root._activeSrcPending;
+                    root._cinematicInitialized = true;
+                    _bgReadyTimer.stop();
+                    _kenBurnsA.stop();
+                    _cinematic.scaleA = 1.0;
+                    _cinematic.offsetXA = 0.01;
+                    _cinematic.offsetYA = -0.005;
+                    _cinematic.opacityA = 1.0;
+                    _cinematic.opacityB = 0.0;
+                    _cinematic.activeLayer = 0;
+                    _kenBurnsA.start();
+                }
+                return;
+            }
+
+            if (root._activeSrcPending === root._activeSrc) {
+                _bgReadyTimer.stop();
+                return;
+            }
+
+            var nextImg = (_cinematic.activeLayer === 0) ? _bgImgB : _bgImgA;
+            if (nextImg.status === Image.Ready || nextImg.status === Image.Error) {
+                _bgReadyTimer.stop();
+                _doCrossfade();
+            }
+        }
+    }
+
+    function _switchBackground(newSrc) {
+        if (newSrc === "") return;
+
+        if (!root._cinematicInitialized) {
+            root._activeSrcPending = newSrc;
+            _bgImgA.source = newSrc;
+            _cinematic.activeLayer = 0;
+            _cinematic.opacityA = 1.0;
+            _cinematic.opacityB = 0.0;
+            _bgReadyTimer.restart();
+            return;
+        }
+
+        if (newSrc === root._activeSrc) return;
+        if (newSrc === root._activeSrcPending) return;
+
+        var inactiveImg = (_cinematic.activeLayer === 0) ? _bgImgB : _bgImgA;
+
+        root._activeSrcPending = newSrc;
+        inactiveImg.source = newSrc;
+        _bgReadyTimer.restart();
+    }
+
+    function _doCrossfade() {
+        if (root._activeSrcPending === root._activeSrc) return;
+
+        root._activeSrc = root._activeSrcPending;
+
+        _kenBurnsA.stop();
+        _kenBurnsB.stop();
+        _transitionAtoB.stop();
+        _transitionBtoA.stop();
+
+        if (_cinematic.activeLayer === 0) {
+            _cinematic.scaleB = 1.07;
+            _cinematic.offsetXB = 0.015;
+            _cinematic.offsetYB = -0.007;
+            _cinematic.opacityB = 0.0;
+            _transitionAtoB.restart();
+            _cinematic.activeLayer = 1;
+        } else {
+            _cinematic.scaleA = 1.07;
+            _cinematic.offsetXA = 0.015;
+            _cinematic.offsetYA = -0.007;
+            _cinematic.opacityA = 0.0;
+            _transitionBtoA.restart();
+            _cinematic.activeLayer = 0;
+        }
+    }
+
+    readonly property string bgSrcWatcher: root._bgSrc
+    onBgSrcWatcherChanged: root._switchBackground(root._bgSrc)
 
     Rectangle {
         anchors.fill: parent
         color: root.lightTheme ? "#dfe3e8" : "#0b1117"
-        opacity: root._bgSrc !== "" ? (root.lightTheme ? 0.72 : 0.55) : 1.0
-        Behavior on color { ColorAnimation { duration: 400 } }
+        opacity: root._bgSrc !== "" ? (root.lightTheme ? 0.72 : 0.52) : 1.0
+        Behavior on color   { ColorAnimation  { duration: 400 } }
         Behavior on opacity { NumberAnimation { duration: 500 } }
     }
 
@@ -352,7 +636,7 @@ FocusScope {
         height: parent.height
         gradient: Gradient {
             GradientStop { position: 0.0; color: "transparent" }
-            GradientStop { position: 0.7; color: root.lightTheme ? "#dfe3e8" : "#0b1117" }
+            GradientStop { position: 0.6; color: root.lightTheme ? "#dfe3e8" : "#0b1117" }
             GradientStop { position: 1.0; color: root.lightTheme ? "#dfe3e8" : "#0b1117" }
         }
     }
@@ -387,11 +671,19 @@ FocusScope {
                 contentY = Math.max(0, yTop - margin);
         }
 
+        function alignRecommendedToRecent() {
+            var recentY = _label.mapToItem(_content, 0, 0).y;
+            var recommendedY = _recLabel.mapToItem(_content, 0, 0).y;
+            var targetY = Math.max(0, recommendedY - recentY);
+            var maxY = Math.max(0, contentHeight - height);
+            contentY = Math.min(targetY, maxY);
+        }
+
         Connections {
             target: _recStrip
             function onActiveFocusChanged() {
                 if (_recStrip.activeFocus)
-                    _scroller.ensureVisible(_recStrip);
+                    _scroller.alignRecommendedToRecent();
             }
         }
         Connections {
@@ -484,7 +776,7 @@ FocusScope {
                     width: _cardW
                     height: _strip.height
                     scale: isCurrent && _strip.activeFocus ? 1.03 : 1.0
-                    opacity: isCurrent ? 1.0 : (_strip.activeFocus ? 0.65 : 0.80)
+                    opacity: isCurrent ? 1.0 : (_strip.activeFocus ? 0.85 : 1.0)
                     Behavior on scale { NumberAnimation { duration: 120 } }
                     Behavior on opacity { NumberAnimation { duration: 150 } }
 
@@ -813,7 +1105,7 @@ FocusScope {
                     width: _recStrip.cardW
                     height: _recStrip.height
                     scale: isCurrent && _recStrip.activeFocus ? 1.05 : 1.0
-                    opacity: isCurrent ? 1.0 : (_recStrip.activeFocus ? 0.65 : 0.80)
+                    opacity: isCurrent ? 1.0 : (_recStrip.activeFocus ? 0.85 : 1.0)
                     Behavior on scale { NumberAnimation { duration: 120 } }
                     Behavior on opacity { NumberAnimation { duration: 150 } }
 
