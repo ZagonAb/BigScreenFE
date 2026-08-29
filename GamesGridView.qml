@@ -367,37 +367,26 @@ FocusScope {
 
                 anchors {
                     right: cover.right
-                    rightMargin: vpx(2)
+                    rightMargin: vpx(6)
                     bottom: sortActive ? sortBadge.top : cover.bottom
-                    bottomMargin: sortActive ? vpx(4) : vpx(2)
+                    bottomMargin: sortActive ? vpx(6) : vpx(2)
                 }
 
-                width: vpx(32); height: vpx(32)
+                width: vpx(53); height: vpx(32)
                 visible: cell.isGame && cell.entry && cell.entry.favorite === true
-
-                Behavior on anchors.bottomMargin { NumberAnimation { duration: 150; easing.type: Easing.OutQuad } }
 
                 Rectangle {
                     anchors.fill: parent
                     radius: width / 2
                     color: Qt.rgba(0,0,0,0.70)
                 }
-                Item {
+                Image {
                     anchors.centerIn: parent
-                    width: vpx(25); height: vpx(25)
-                    Image {
-                        id: favIconSrc
-                        anchors.fill: parent
-                        source: "assets/icons/favorite.svg"
-                        fillMode: Image.PreserveAspectFit
-                        mipmap: true
-                        visible: false
-                    }
-                    ColorOverlay {
-                        anchors.fill: parent
-                        source: favIconSrc
-                        color: "#00ff08"
-                    }
+                    width: vpx(23); height: vpx(23)
+                    source: "assets/icons/favorite.svg"
+                    fillMode: Image.PreserveAspectFit
+                    mipmap: true
+                    smooth: true
                 }
             }
 

@@ -861,32 +861,25 @@ FocusScope {
                     Item {
                         anchors {
                             right: parent.right
-                            top: parent.top
+                            bottom: parent.bottom
                             rightMargin: vpx(6)
-                            topMargin: vpx(6)
+                            bottomMargin: vpx(6)
                         }
-                        width: vpx(26)
-                        height: vpx(26)
+                        width: vpx(53)
+                        height: vpx(32)
                         visible: !_cell._isViewMore && (_cell._game ? _cell._game.favorite === true : false)
 
                         Rectangle {
                             anchors.fill: parent
-                            radius: width / 2
-                            color: Qt.rgba(0, 0, 0, 0.70)
+                            radius: width
+                            color: "#E6111921"
                         }
                         Image {
-                            id: _favIcon
                             anchors.centerIn: parent
-                            width: vpx(18); height: vpx(18)
+                            width: vpx(23); height: vpx(23)
                             source: "assets/icons/favorite.svg"
                             fillMode: Image.PreserveAspectFit
-                            mipmap: true; smooth: true
-                            visible: false
-                        }
-                        ColorOverlay {
-                            anchors.fill: _favIcon
-                            source: _favIcon
-                            color: "#00ff08"
+                            mipmap: true
                         }
                     }
 
@@ -1211,32 +1204,25 @@ FocusScope {
                         Item {
                             anchors {
                                 right: parent.right
-                                top: parent.top
-                                rightMargin: vpx(4)
-                                topMargin: vpx(4)
+                                bottom: parent.bottom
+                                rightMargin: vpx(6)
+                                bottomMargin: vpx(6)
                             }
-                            width: vpx(26)
-                            height: vpx(26)
+                            width: vpx(53)
+                            height: vpx(32)
                             visible: _rc._game ? (_rc._game.favorite === true) : false
 
                             Rectangle {
                                 anchors.fill: parent
-                                radius: width / 2
-                                color: Qt.rgba(0, 0, 0, 0.70)
+                                radius: width
+                                color: "#E6111921"
                             }
                             Image {
-                                id: _rcFavIcon
                                 anchors.centerIn: parent
-                                width: vpx(18); height: vpx(18)
+                                width: vpx(23); height: vpx(23)
                                 source: "assets/icons/favorite.svg"
                                 fillMode: Image.PreserveAspectFit
                                 mipmap: true
-                                visible: false
-                            }
-                            ColorOverlay {
-                                anchors.fill: _rcFavIcon
-                                source: _rcFavIcon
-                                color: "#00ff08"
                             }
                         }
                     }
