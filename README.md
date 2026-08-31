@@ -6,6 +6,8 @@
 
 ![screen1](https://github.com/ZagonAb/BigScreenFE/blob/5b63584b9b9f17a8311302001d4bb705ea1277c1/.meta/screenshots/1.png)
 
+![screen2](https://github.com/ZagonAb/BigScreenFE/blob/2fd5b02977eaf8846f111913037e651b916d836c/.meta/screenshots/2.png)
+
 
 # RetroArch Monochrome Icons
 
