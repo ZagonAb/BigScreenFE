@@ -2,9 +2,9 @@
 
 -  A theme for Pegasus Frontend, inspired by the Big Picture Library.
 
-![screen0](https://github.com/ZagonAb/BigScreenFE/blob/5b63584b9b9f17a8311302001d4bb705ea1277c1/.meta/screenshots/0.png)
+![screen0](https://github.com/ZagonAb/BigScreenFE/blob/34787e46fbf4e95c9e88b94f2eed2be668a4f4c0/.meta/screenshots/0.png)
 
-![screen1](https://github.com/ZagonAb/BigScreenFE/blob/5b63584b9b9f17a8311302001d4bb705ea1277c1/.meta/screenshots/1.png)
+![screen1](https://github.com/ZagonAb/BigScreenFE/blob/34787e46fbf4e95c9e88b94f2eed2be668a4f4c0/.meta/screenshots/1.png)
 
 ![screen2](https://github.com/ZagonAb/BigScreenFE/blob/2fd5b02977eaf8846f111913037e651b916d836c/.meta/screenshots/2.png)
 
