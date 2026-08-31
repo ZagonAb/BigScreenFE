@@ -1,5 +1,5 @@
 // BigScreenFE Theme
-// Copyright (C) 2026 Gonzalo
+// Copyright (C) 2026 Gonzalo Abbate
 //
 // Licensed under Creative Commons
 // Attribution-NonCommercial-ShareAlike 4.0 International.
@@ -18,6 +18,7 @@ FocusScope {
     signal focusSearchRequested()
     signal openHub(var game)
     signal openRA(var game, string raGameId)
+    signal readyToShow()
 
     property bool lightTheme: false
 
@@ -303,11 +304,84 @@ FocusScope {
         _strip.forceActiveFocus();
     }
 
+    readonly property int _readyThreshold:    3
+    readonly property int _readyRecThreshold: 2
+    readonly property int _readyMaxWait:   8000
+    property bool _readyEmitted: false
+    property int  _readyElapsed: 0
+
+    function _hasReadyImage(item, depth) {
+        if (!item || depth < 0) return false
+            for (var c = 0; c < item.children.length; c++) {
+                var child = item.children[c]
+                if (!child) continue
+                    if (child.hasOwnProperty("status") &&
+                        (child.status === Image.Ready || child.status === Image.Error)) {
+                        if (child.source && child.source.toString() !== "")
+                            return true
+                        }
+                        if (depth > 0 && root._hasReadyImage(child, depth - 1))
+                            return true
+            }
+            return false
+    }
+
+    function _countReady(listView, maxIndex, depth) {
+        var ready = 0
+        for (var i = 0; i < listView.count && i < maxIndex; i++) {
+            var item = listView.itemAtIndex(i)
+            if (item && root._hasReadyImage(item, depth))
+                ready++
+        }
+        return ready
+    }
+
+    function _checkReadiness() {
+        if (root._readyEmitted) return
+
+            var needed  = Math.min(root._readyThreshold, root._recentGames.length)
+            var ready   = root._countReady(_strip, root._recentCount, 0)
+
+            var recNeeded = Math.min(root._readyRecThreshold, root._recGames.length)
+            var recReady  = root._countReady(_recStrip, root._recGames.length, 1)
+
+            root._readyElapsed += 80
+
+            var timedOut     = root._readyElapsed >= root._readyMaxWait
+            var stripDone     = (needed <= 0)    || (ready    >= needed)
+            var recStripDone  = (recNeeded <= 0) || (recReady >= recNeeded)
+            var bgDone         = root._cinematicInitialized || root._bgSrc === ""
+            var hasEnough      = stripDone && recStripDone && bgDone
+
+            if (hasEnough || timedOut) {
+                if (timedOut && !hasEnough)
+                    console.log("HomeView readyToShow: timeout (" + root._readyMaxWait + "ms) — strip "
+                    + ready + "/" + needed + ", recommended " + recReady + "/" + recNeeded
+                    + ", fondo " + (bgDone ? "listo" : "pendiente"))
+                    else
+                        console.log("HomeView readyToShow: strip " + ready + "/" + needed
+                        + ", recommended " + recReady + "/" + recNeeded
+                        + ", fondo listo, en " + root._readyElapsed + "ms")
+                        _readinessTimer.stop()
+                        root._readyEmitted = true
+                        root.readyToShow()
+            }
+    }
+
+    Timer {
+        id: _readinessTimer
+        interval: 80
+        repeat: true
+        running: false
+        onTriggered: root._checkReadiness()
+    }
+
     Component.onCompleted: {
         _rebuildCache();
         _buildRecommended();
         _loadRARecent();
         _switchBackground(root._bgSrc);
+        _readinessTimer.start()
     }
     Connections {
         target: _recentSrc
@@ -887,7 +961,7 @@ FocusScope {
                         id: _selRect
                         anchors.fill: parent
                         property real borderExtra: 0
-                         anchors.margins: vpx(-3.5) - borderExtra
+                        anchors.margins: vpx(-3.5) - borderExtra
                         border.width: vpx(1.5) + borderExtra
                         border.color: root.lightTheme ? "#05070a" : "#c7c7c7"
 

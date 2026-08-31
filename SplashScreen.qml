@@ -1,5 +1,5 @@
 // BigScreenFE Theme
-// Copyright (C) 2026 Gonzalo
+// Copyright (C) 2026 Gonzalo Abbate
 //
 // Licensed under Creative Commons
 // Attribution-NonCommercial-ShareAlike 4.0 International.
@@ -25,10 +25,23 @@ Rectangle {
     visible: opacity > 0
     opacity: 1.0
 
-    Behavior on color { ColorAnimation { duration: 300 } }
-    Behavior on opacity { NumberAnimation { duration: 300 } }
+    Behavior on color { ColorAnimation  { duration: 300 } }
+    Behavior on opacity { NumberAnimation { duration: 600; easing.type: Easing.InOutQuad } }
 
-    function hide() { root.opacity = 0; }
+    function hide() { _hideDelayTimer.restart() }
+
+    Timer {
+        id: _hideDelayTimer
+        interval: 2000
+        repeat: false
+        onTriggered: root.opacity = 0
+    }
+
+    onOpacityChanged: {
+        if (opacity === 0) {
+            sniperCircle.angle = 0
+        }
+    }
 
     Column {
         anchors.centerIn: parent
@@ -74,9 +87,11 @@ Rectangle {
 
                 scale: 1.0
                 SequentialAnimation on scale {
+                    id: logoPulseAnim
                     loops: Animation.Infinite
-                    NumberAnimation { from: 1.0; to: 1.15; duration: 600; easing.type: Easing.InOutQuad }
-                    NumberAnimation { from: 1.15; to: 1.0; duration: 600; easing.type: Easing.InOutQuad }
+                    running: root.opacity > 0
+                    NumberAnimation { from: 1.0;  to: 1.15; duration: 600; easing.type: Easing.InOutQuad }
+                    NumberAnimation { from: 1.15; to: 1.0;  duration: 600; easing.type: Easing.InOutQuad }
                 }
             }
 
@@ -131,18 +146,9 @@ Rectangle {
 
                 SequentialAnimation on angle {
                     loops: Animation.Infinite
-                    NumberAnimation {
-                        from: 0
-                        to: 360
-                        duration: 2000
-                        easing.type: Easing.InOutQuad
-                    }
-                    NumberAnimation {
-                        from: 360
-                        to: 720
-                        duration: 2000
-                        easing.type: Easing.InOutQuad
-                    }
+                    running: root.opacity > 0
+                    NumberAnimation { from: 0; to: 360; duration: 2000; easing.type: Easing.InOutQuad }
+                    NumberAnimation { from: 360; to: 720; duration: 2000; easing.type: Easing.InOutQuad }
                 }
 
                 onAngleChanged: requestPaint()
@@ -197,6 +203,7 @@ Rectangle {
             opacity: 0.8
             SequentialAnimation on opacity {
                 loops: Animation.Infinite
+                running: root.opacity > 0
                 NumberAnimation { from: 0.8; to: 1.0; duration: 800; easing.type: Easing.InOutQuad }
                 NumberAnimation { from: 1.0; to: 0.8; duration: 800; easing.type: Easing.InOutQuad }
             }

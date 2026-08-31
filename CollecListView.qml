@@ -1,5 +1,5 @@
 // BigScreenFE Theme
-// Copyright (C) 2026 Gonzalo
+// Copyright (C) 2026 Gonzalo Abbate
 //
 // Licensed under Creative Commons
 // Attribution-NonCommercial-ShareAlike 4.0 International.

@@ -1,5 +1,5 @@
 // BigScreenFE Theme
-// Copyright (C) 2026 Gonzalo
+// Copyright (C) 2026 Gonzalo Abbate
 //
 // Licensed under Creative Commons
 // Attribution-NonCommercial-ShareAlike 4.0 International.
@@ -30,7 +30,6 @@ FocusScope {
     property string currentSortId: "alpha_asc"
     property bool preserveSourceOrder: false
     property bool lightTheme: false
-
     property string lastNavDirection: "right"
     property bool _restoringIndex: false
 
@@ -46,13 +45,11 @@ FocusScope {
 
     SortFilterProxyModel {
         id: sortProxy
-
         sourceModel: {
             if (!root.isCollections) return root.gamesModel
                 if (root.inCollectionGames) return root.activeCollectionGames
                     return null
         }
-
         sorters: [
             RoleSorter { roleName: "sortBy"; sortOrder: Qt.AscendingOrder; enabled: !root.preserveSourceOrder && root.currentSortId === "alpha_asc" },
             RoleSorter { roleName: "sortBy"; sortOrder: Qt.DescendingOrder; enabled: !root.preserveSourceOrder && root.currentSortId === "alpha_desc" },
@@ -98,41 +95,58 @@ FocusScope {
         if (grid.currentItem) activateEntry(grid.currentItem.entry)
     }
 
-    function saveIndex() {
-        var key = "gridIndex_" + collecBar.currentShortName
-        api.memory.set(key, grid.currentIndex)
+    function restoreTabIndex(idx) {
+        grid.currentIndex = (idx !== undefined && idx >= 0) ? idx : 0
     }
 
-    function restoreIndex() {
-        var key = "gridIndex_" + collecBar.currentShortName
-        var saved = api.memory.get(key)
-        grid.currentIndex = (saved !== undefined) ? saved : 0
-    }
+    property int currentIndex: grid.currentIndex
 
     readonly property int columns: 6
     readonly property real cellWidth: Math.floor(width / columns)
     readonly property bool showingCollectionList: isCollections && !inCollectionGames
     readonly property real gridAvailableHeight: height
-    readonly property real cellHeight: showingCollectionList ? Math.floor(gridAvailableHeight / 3.0) : Math.floor(cellWidth * 1.4)
-
+    readonly property real cellHeight: showingCollectionList
+    ? Math.max(0, Math.floor(gridAvailableHeight / 3.0))
+    : Math.max(0, Math.floor(cellWidth * 1.4))
     readonly property real contentY: grid.contentY
+    readonly property real collageTilt: -40
 
     ConsoleColors { id: consoleColors }
 
+    property var collectionCoverCache: ({})
+
+    function _getCollectionCoverUrls(entry) {
+        if (!entry || !entry.games) return []
+            var key = entry.shortName || entry.name || ""
+            var cached = root.collectionCoverCache[key]
+            if (cached !== undefined) return cached
+                var gm = entry.games
+                var total = gm.count || 0
+                var urls = []
+                if (total > 0) {
+                    var scanLimit = Math.min(total, 24)
+                    for (var i = 0; i < scanLimit && urls.length < 4; i++) {
+                        var g = gm.get(i)
+                        if (g && g.assets && g.assets.boxFront)
+                            urls.push(g.assets.boxFront)
+                    }
+                }
+                root.collectionCoverCache[key] = urls
+                return urls
+    }
+
     GridView {
         id: grid
-
         anchors {
             top: parent.top; left: parent.left; right: parent.right; bottom: parent.bottom
             bottomMargin: vpx(10)
         }
         focus: true
         clip: false
-
         model: root.effectiveModel
         cellWidth: root.cellWidth
         cellHeight: root.cellHeight
-
+        cacheBuffer: root.cellHeight
         flickDeceleration: 1500
         maximumFlickVelocity: 2500
 
@@ -143,7 +157,6 @@ FocusScope {
 
             property var entry: modelData
             property bool isCurrent: GridView.isCurrentItem
-
             readonly property bool isGame: !root.showingCollectionList
 
             readonly property string sortBadgeText: {
@@ -183,14 +196,15 @@ FocusScope {
                         var sn = entry.shortName || entry.name.toLowerCase()
                         return "assets/systems/" + sn + ".png"
             }
-            property string coverUrl: {
-                if (root.isCollections && !root.inCollectionGames)
-                    return entry.assets.background || entry.assets.boxFront || ""
-                    return entry.assets.boxFront || ""
-            }
+            property string coverUrl: entry && entry.assets ? (entry.assets.boxFront || "") : ""
             property string coverLabel: {
-                if (root.isCollections && !root.inCollectionGames) return entry.name
-                    return entry.title
+                if (!entry) return ""
+                    if (root.isCollections && !root.inCollectionGames) return entry.name || ""
+                        return entry.title || ""
+            }
+            property var collectionCoverUrls: {
+                if (!root.showingCollectionList || !entry) return []
+                    return root._getCollectionCoverUrls(entry)
             }
 
             Item {
@@ -207,11 +221,13 @@ FocusScope {
                     anchors.centerIn: parent; width: parent.width * 0.65; height: parent.height * 0.65
                     source: cell.systemLogoUrl; fillMode: Image.PreserveAspectFit
                     asynchronous: true; mipmap: true; visible: root.showingCollectionList
+                    sourceSize.width: width; sourceSize.height: height
                 }
                 Image {
                     anchors.fill: parent; source: cell.coverUrl
                     fillMode: Image.PreserveAspectCrop; asynchronous: true; mipmap: true
                     visible: !root.showingCollectionList
+                    sourceSize.width: width; sourceSize.height: height
                 }
             }
             FastBlur {
@@ -222,33 +238,111 @@ FocusScope {
                 Behavior on opacity { NumberAnimation { duration: 180 } }
             }
 
-            Image {
+            Item {
                 id: cover
                 anchors.fill: parent; anchors.margins: vpx(10)
-                source: cell.coverUrl; fillMode: Image.PreserveAspectCrop
-                asynchronous: true; mipmap: true
+                clip: true
 
-                Rectangle {
+                Item {
+                    id: collage
                     anchors.fill: parent
-                    color: root.showingCollectionList ? cell.consoleColor : _fallbackBg
-                    visible: cover.status !== Image.Ready
-                    Behavior on color { ColorAnimation { duration: 200 } }
+                    visible: root.showingCollectionList
+                    clip: true
+                    readonly property var urls: cell.collectionCoverUrls
+
+                    Rectangle {
+                        anchors.fill: parent
+                        color: cell.consoleColor
+                        visible: collage.urls.length === 0
+                        Behavior on color { ColorAnimation { duration: 200 } }
+                    }
+
+                    Item {
+                        id: mosaic
+                        readonly property int cellsPerSide: 3
+                        readonly property real side: Math.max(collage.width, collage.height) * 1.9
+                        readonly property real tileSlot: side / cellsPerSide
+                        readonly property real tileGap: 0.12
+                        readonly property real tileSize: tileSlot * (1 - tileGap)
+                        width: side; height: side
+                        anchors.centerIn: parent
+                        rotation: root.collageTilt
+                        visible: collage.urls.length > 0
+
+                        Repeater {
+                            model: mosaic.cellsPerSide * mosaic.cellsPerSide
+                            delegate: Item {
+                                id: mosaicSlot
+                                readonly property int col: index % mosaic.cellsPerSide
+                                readonly property int row: Math.floor(index / mosaic.cellsPerSide)
+                                x: col * mosaic.tileSlot + (mosaic.tileSlot - width) / 2
+                                y: row * mosaic.tileSlot + (mosaic.tileSlot - height) / 2
+                                width: mosaic.tileSize
+                                height: mosaic.tileSize
+
+                                Rectangle {
+                                    anchors.fill: parent
+                                    color: Qt.darker(cell.consoleColor, 1.3)
+                                }
+                                Image {
+                                    anchors.fill: parent
+                                    source: collage.urls.length > 0 ? collage.urls[index % collage.urls.length] : ""
+                                    fillMode: Image.PreserveAspectFit
+                                    asynchronous: true; mipmap: true; smooth: true
+                                    sourceSize.width: Math.ceil(mosaic.tileSize)
+                                    sourceSize.height: Math.ceil(mosaic.tileSize)
+                                }
+                            }
+                        }
+                    }
+
+                    Rectangle {
+                        anchors.fill: parent
+                        color: cell.consoleColor
+                        opacity: collage.urls.length > 0 ? 0.5 : 0.85
+                        Behavior on color { ColorAnimation { duration: 200 } }
+                    }
+
+                    Rectangle {
+                        anchors { left: parent.left; right: parent.right; bottom: parent.bottom }
+                        height: parent.height * 0.6
+                        gradient: Gradient {
+                            GradientStop { position: 0.0; color: "#00000000" }
+                            GradientStop { position: 1.0; color: "#CC000000" }
+                        }
+                    }
                 }
 
-                Text {
-                    anchors.centerIn: parent
-                    width: parent.width - vpx(12)
-                    visible: !root.showingCollectionList && cover.status !== Image.Ready
-                    text: cell.coverLabel
-                    color: _textPrimary
-                    font.family: global.fonts.sans
-                    font.pixelSize: vpx(11)
-                    wrapMode: Text.WordWrap
-                    horizontalAlignment: Text.AlignHCenter
-                    style: Text.Outline
-                    styleColor: lightTheme ? "#ffffff" : "#000000"
-                    z: 1
-                    Behavior on color { ColorAnimation { duration: 200 } }
+                Image {
+                    id: gameCoverImage
+                    anchors.fill: parent
+                    source: cell.coverUrl; fillMode: Image.PreserveAspectCrop
+                    asynchronous: true; mipmap: true
+                    visible: !root.showingCollectionList
+                    sourceSize.width: width; sourceSize.height: height
+
+                    Rectangle {
+                        anchors.fill: parent
+                        color: _fallbackBg
+                        visible: gameCoverImage.status !== Image.Ready
+                        Behavior on color { ColorAnimation { duration: 200 } }
+                    }
+
+                    Text {
+                        anchors.centerIn: parent
+                        width: parent.width - vpx(12)
+                        visible: gameCoverImage.status !== Image.Ready
+                        text: cell.coverLabel
+                        color: _textPrimary
+                        font.family: global.fonts.sans
+                        font.pixelSize: vpx(11)
+                        wrapMode: Text.WordWrap
+                        horizontalAlignment: Text.AlignHCenter
+                        style: Text.Outline
+                        styleColor: lightTheme ? "#ffffff" : "#000000"
+                        z: 1
+                        Behavior on color { ColorAnimation { duration: 200 } }
+                    }
                 }
             }
 
@@ -257,7 +351,8 @@ FocusScope {
                 anchors.centerIn: cover; width: cover.width * 0.65; height: cover.height * 0.65
                 source: cell.systemLogoUrl; fillMode: Image.PreserveAspectFit
                 asynchronous: true; mipmap: true
-                visible: root.showingCollectionList; opacity: 0.6; z: 1
+                visible: root.showingCollectionList && cell.collectionCoverUrls.length === 0
+                opacity: 0.6; z: 1
             }
 
             Text {
@@ -296,7 +391,6 @@ FocusScope {
                     anchors.verticalCenter: parent.verticalCenter
                     anchors.horizontalCenter: parent.horizontalCenter
                     spacing: vpx(2)
-
                     property real offsetX: 0
                     transform: Translate { x: gameCountColumn.offsetX }
 
@@ -324,17 +418,14 @@ FocusScope {
                 SequentialAnimation {
                     id: slideAnim
                     running: false
-
                     property real fromX: vpx(120)
                     property real exitX: vpx(-120)
 
                     function startForDirection(dir) {
                         slideAnim.stop()
                         dimmingBg.opacity = 0.0
-
                         if (dir === "left") { fromX = vpx(-120); exitX = vpx(120) }
                         else { fromX = vpx(120); exitX = vpx(-120) }
-
                         gameCountColumn.offsetX = fromX
                         dimmingBg.opacity = 0.55
                         slideAnim.restart()
@@ -343,7 +434,6 @@ FocusScope {
                     NumberAnimation { target: gameCountColumn; property: "offsetX"; to: 0; duration: 400; easing.type: Easing.OutCubic }
                     PauseAnimation { duration: 1000 }
                     NumberAnimation { target: gameCountColumn; property: "offsetX"; to: slideAnim.exitX; duration: 400; easing.type: Easing.InCubic }
-
                     onStopped: {
                         if (!gameCountOverlay.visible) return
                             dimmingBg.opacity = 0.0
@@ -364,14 +454,12 @@ FocusScope {
             Item {
                 id: favBadge
                 readonly property bool sortActive: cell.sortBadgeText !== ""
-
                 anchors {
                     right: cover.right
                     rightMargin: vpx(6)
                     bottom: sortActive ? sortBadge.top : cover.bottom
                     bottomMargin: sortActive ? vpx(6) : vpx(2)
                 }
-
                 width: vpx(53); height: vpx(32)
                 visible: cell.isGame && cell.entry && cell.entry.favorite === true
 
@@ -385,8 +473,7 @@ FocusScope {
                     width: vpx(23); height: vpx(23)
                     source: "assets/icons/favorite.svg"
                     fillMode: Image.PreserveAspectFit
-                    mipmap: true
-                    smooth: true
+                    mipmap: true; smooth: true
                 }
             }
 
@@ -478,8 +565,16 @@ FocusScope {
         Keys.onRightPressed: { root.lastNavDirection = "right"; event.accepted = false }
 
         Keys.onPressed: {
-            if (!event.isAutoRepeat && api.keys.isAccept(event)) { event.accepted = true; if (grid.currentItem) root.activateEntry(grid.currentItem.entry); return }
-            if (api.keys.isDetails(event) && root.showingGames) { event.accepted = true; root.toggleFavorite(); return }
+            if (!event.isAutoRepeat && api.keys.isAccept(event)) {
+                event.accepted = true
+                if (grid.currentItem) root.activateEntry(grid.currentItem.entry)
+                    return
+            }
+            if (api.keys.isDetails(event) && root.showingGames) {
+                event.accepted = true
+                root.toggleFavorite()
+                return
+            }
             if (api.keys.isCancel(event)) {
                 event.accepted = true
                 if (root.isCollections && root.inCollectionGames) {
