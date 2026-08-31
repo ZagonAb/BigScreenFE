@@ -858,7 +858,12 @@ FocusScope {
                     width: _cardW
                     height: _strip.height
                     scale: isCurrent && _strip.activeFocus ? 1.03 : 1.0
-                    Behavior on scale { NumberAnimation { duration: 120 } }
+                    Behavior on scale {
+                        NumberAnimation {
+                            duration: 180
+                            easing.type: Easing.OutCubic
+                        }
+                    }
                     Behavior on opacity { NumberAnimation { duration: 150 } }
 
                     Image {
